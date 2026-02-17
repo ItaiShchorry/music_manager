@@ -1,2 +1,52 @@
+
+# Temporary files (for testing)
+tmp/
+
+# Logs
+logs/
+*.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.npm
+.yarn/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
 .env
-.env.*
+.env.local
+
+# Database
+*.db
+*.sqlite
+
+# Build outputs
+frontend/dist/
+frontend/build/
+backend/.cache/

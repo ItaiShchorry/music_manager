@@ -1,0 +1,175 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "music-promo-tool",
+    "type": "fullstack-web",
+    "languages": ["python", "typescript", "javascript"],
+    "os_note": "Developed on Windows — all hook scripts invoked via `node` explicitly"
+  },
+
+  "allowed_commands": {
+    "description": "Commands Claude can run without asking for confirmation",
+    "commands": [
+      "npm install",
+      "npm run dev",
+      "npm run build",
+      "npm run test",
+      "pip install",
+      "python -m pytest",
+      "alembic revision",
+      "alembic upgrade head",
+      "git status",
+      "git diff",
+      "git log",
+      "git branch",
+      "git add",
+      "git checkout",
+      "git merge",
+      "docker-compose up",
+      "docker-compose down",
+      "node"
+    ]
+  },
+
+  "restricted_commands": {
+    "description": "Commands that always require user confirmation before running",
+    "commands": [
+      "git push --force",
+      "git reset --hard",
+      "git clean",
+      "alembic downgrade",
+      "DROP TABLE",
+      "DROP DATABASE",
+      "npm publish",
+      "rmdir /s",
+      "Remove-Item -Recurse -Force",
+      "del /f /s /q"
+    ]
+  },
+
+  "hooks": {
+    "description": "Event-driven automation — all scripts called with `node <script>` for Windows compatibility",
+
+    "pre_commit": {
+      "enabled": true,
+      "command": "node .claude/hooks/pre-commit.js",
+      "blocking": true,
+      "events": ["git_commit"],
+      "description": "Runs before every git commit: checks branch protection and runs code review"
+    },
+
+    "post_edit": {
+      "enabled": true,
+      "command": "node .claude/hooks/post-edit.js",
+      "blocking": false,
+      "events": ["file_write_batch"],
+      "description": "Runs after significant code changes: auto-formats Python and TypeScript"
+    },
+
+    "dangerous_command": {
+      "enabled": true,
+      "command": "node .claude/hooks/dangerous-commands.js",
+      "blocking": true,
+      "events": ["shell_command"],
+      "description": "Runs before shell commands: blocks destructive operations"
+    },
+
+    "code_review": {
+      "enabled": true,
+      "command": "node .claude/hooks/code-review.js",
+      "blocking": true,
+      "events": ["git_commit", "major_edit"],
+      "description": "Automated code quality check: runs as part of pre-commit and after large edits"
+    }
+  },
+
+  "mcp_servers": {
+    "description": "Model Context Protocol servers used in this project",
+    "playwright": {
+      "enabled": true,
+      "command": "npx",
+      "args": ["@playwright/mcp-server"],
+      "description": "Browser automation for testing the web UI — saves hours of manual testing"
+    }
+  },
+
+  "auto_format": {
+    "enabled": true,
+    "note": "Formatting is handled by post-edit.js hook using Node.js fs — no shell `find` needed",
+    "python": {
+      "tool": "black",
+      "install": "pip install black",
+      "options": "--line-length 100"
+    },
+    "python_imports": {
+      "tool": "isort",
+      "install": "pip install isort"
+    },
+    "typescript": {
+      "tool": "prettier",
+      "install": "npm install -g prettier",
+      "config_file": "frontend/.prettierrc"
+    }
+  },
+
+  "git": {
+    "protected_branches": ["main", "production"],
+    "commit_format": "conventional",
+    "examples": [
+      "feat(songs): add Spotify search integration",
+      "fix(dashboard): correct health score calculation",
+      "docs(readme): update setup instructions",
+      "refactor(api): extract auth middleware"
+    ],
+    "require_code_review_before_commit": true
+  },
+
+  "testing": {
+    "backend": {
+      "framework": "pytest",
+      "command": "python -m pytest",
+      "coverage_threshold": 80
+    },
+    "frontend": {
+      "framework": "vitest",
+      "command": "npm run test",
+      "coverage_threshold": 70
+    },
+    "e2e": {
+      "framework": "playwright",
+      "command": "npx playwright test",
+      "note": "Use Playwright MCP via Claude Code for interactive UI testing"
+    }
+  },
+
+  "claude_instructions": {
+    "primary_file": "Claude.md",
+    "always_update_after_changes": ["STATUS.md"],
+    "reference_docs": [
+      "PRD.md",
+      "TECH_SPEC.md",
+      "docs/component_01_smart_song_profile.md",
+      "docs/component_02_israeli_playlist_radio_discovery.md",
+      "docs/component_03_submithub_integration.md",
+      "docs/component_04_campaign_budget_management.md",
+      "docs/component_05_dashboard_insights_engine.md",
+      "docs/component_06_hebrew_social_content_generation.md"
+    ]
+  },
+
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "rotation": "daily",
+    "retention_days": 30,
+    "directory": "logs"
+  },
+
+  "windows_notes": {
+    "paths": "Use backslashes in Windows paths (\\) or forward slashes — both work in Node.js",
+    "hooks": "Hooks are invoked as `node <path>` — no chmod or shebang handling needed",
+    "shell": "Use PowerShell for all manual commands (mkdir, git, npm, pip)",
+    "mkdir": "PowerShell: `mkdir .claude\\hooks` or `New-Item -ItemType Directory .claude\\hooks`",
+    "line_endings": "Configure git: `git config core.autocrlf true` to avoid CRLF issues"
+  }
+}
