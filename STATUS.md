@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-02-25
 
-**Current Phase:** Week 1 Complete — Backend Foundation + Auth + Song CRUD
+**Current Phase:** Week 2 Complete — PATCH endpoint + Full Frontend (Component 1 end-to-end)
 
 **Active Branch:** `feature/setup-project-structure`
 
@@ -10,11 +10,11 @@
 
 ## Quick Stats
 
-- **Total Components:** 6 planned, 1 partially implemented (Component 1 — backend only)
-- **Backend Endpoints:** 7 implemented (3 auth + 4 songs)
-- **Frontend Pages:** 0 (not started — Week 2)
-- **Database Tables (ORM):** 2 defined (`users`, `songs`) — migrations pending DB setup
-- **Tests Written:** 29 passing, 0 failing
+- **Total Components:** 6 planned, 1 fully implemented end-to-end (Component 1)
+- **Backend Endpoints:** 8 implemented (3 auth + 5 songs)
+- **Frontend Pages:** 4 (Login, Songs list, Add Song, Song detail/edit)
+- **Database Tables (ORM):** 2 defined (`users`, `songs`)
+- **Tests Written:** 36 passing, 0 failing
 - **Deployment Status:** Not deployed
 
 ---
@@ -36,13 +36,13 @@ music_manager/
 │   ├── .env.example          ✅ All required env vars documented
 │   ├── alembic/
 │   │   ├── env.py            ✅ Wired to models; ready for migrations
-│   │   └── versions/         ⏳ No migrations run yet (no DB locally)
+│   │   └── versions/         ⏳ No migrations run yet (using SQLite locally)
 │   ├── app/
 │   │   ├── config.py         ✅ pydantic-settings, reads .env
 │   │   ├── database.py       ✅ SQLAlchemy engine + get_db
 │   │   ├── api/
 │   │   │   ├── auth.py       ✅ /register, /login, /me
-│   │   │   └── songs.py      ✅ CRUD + Spotify metadata on create
+│   │   │   └── songs.py      ✅ Full CRUD + PATCH manual fields
 │   │   ├── models/
 │   │   │   ├── user.py       ✅ User ORM model
 │   │   │   └── song.py       ✅ Song ORM model (Spotify + manual fields)
@@ -55,12 +55,38 @@ music_manager/
 │   └── tests/
 │       ├── conftest.py       ✅ SQLite in-memory fixtures
 │       ├── integration/
-│       │   ├── test_us001_auth.py   ✅ 10 tests
-│       │   └── test_us002_songs.py  ✅ 10 tests
+│       │   ├── test_us001_auth.py          ✅ 10 tests
+│       │   ├── test_us002_songs.py         ✅ 19 tests
+│       │   └── test_us003_song_update.py   ✅ 7 tests
 │       └── unit/
-│           └── test_us002_spotify_url_parsing.py  ✅ 9 tests
+│           └── test_us002_spotify_url_parsing.py  ✅ 9 tests (5 invalid + 4 valid)
 └── frontend/
-    └── src/                  ⏳ Empty — Week 2
+    ├── index.html            ✅
+    ├── package.json          ✅ React 18, Vite, TailwindCSS 3, TanStack Query
+    ├── vite.config.ts        ✅ Proxy /api → localhost:8000
+    ├── tailwind.config.ts    ✅
+    ├── tsconfig.json         ✅
+    └── src/
+        ├── main.tsx          ✅
+        ├── App.tsx           ✅ React Router v6, QueryClientProvider
+        ├── index.css         ✅ Tailwind directives
+        ├── vite-env.d.ts     ✅ import.meta.env types
+        ├── types/index.ts    ✅ User, Song, LoginRequest, TokenResponse
+        ├── api/
+        │   ├── client.ts     ✅ Axios + JWT interceptor + 401 redirect
+        │   ├── auth.ts       ✅ login(), getMe()
+        │   └── songs.ts      ✅ listSongs, getSong, createSong, updateSong, deleteSong
+        ├── hooks/
+        │   └── useAuth.ts    ✅ Token lifecycle, user state, login/logout
+        ├── components/
+        │   ├── ProtectedRoute.tsx      ✅ Redirects to /login if no token
+        │   └── songs/
+        │       └── SongCard.tsx        ✅ Album art, title, artist, year
+        └── pages/
+            ├── LoginPage.tsx           ✅ react-hook-form + zod validation
+            ├── SongsPage.tsx           ✅ TanStack Query grid + empty state + skeleton
+            ├── SongNewPage.tsx         ✅ Spotify URL input + mutation
+            └── SongDetailPage.tsx      ✅ Read-only metadata + editable manual fields
 ```
 
 ---
@@ -89,18 +115,30 @@ music_manager/
 - `parse_spotify_track_id()` — accepts full URL, URI (`spotify:track:id`), query-param URLs, or raw 22-char ID
 - 19 tests: URL parsing (4 valid + 5 invalid), CRUD (happy paths + auth + 409 duplicate + 404)
 
-### ⏳ Not Started
+**US-003: Song Update (Manual Fields)**
+- `PATCH /api/v1/songs/{id}` — partial update of story, mood_tags, themes, comparable_artists
+- Uses `model_dump(exclude_unset=True)` — only fields sent in the request body are changed
+- 7 tests: happy path, partial update, empty body, auth required, 404, other-user isolation
 
-**Week 2 — Frontend scaffold + Song update (manual fields)**
-- `PATCH /api/v1/songs/{id}` — update story, mood_tags, themes, comparable_artists
-- React + Vite + TailwindCSS setup
-- Login page, Songs list page, Song detail/edit page
+**Frontend — Component 1 UI**
+- React 18 + Vite + TailwindCSS 3 + React Router v6 + TanStack Query + react-hook-form + zod
+- API layer: axios client with JWT Bearer interceptor, 401 auto-redirects to /login
+- `LoginPage` — email/password form, zod validation, stores token on success
+- `SongsPage` — song grid, loading skeleton, empty state, "Add Song" button
+- `SongNewPage` — Spotify URL input, imports metadata on submit, navigates to detail
+- `SongDetailPage` — read-only Spotify metadata + editable story/tags/themes/comparable artists with chip-based tag input
+- `SongCard` — reusable album art card
+- `ProtectedRoute` — redirects unauthenticated users to /login
+- `npm run build` passes with zero TypeScript errors
+
+### ⏳ Not Started
 
 **Week 3 — Component 2: Israeli Playlist & Radio Discovery**
 - Playlist model + seed data (Israeli playlists + Galei Tzahal)
 - Playlist match algorithm (genre/mood/language scoring)
 - `GET /api/v1/playlists` + `GET /api/v1/playlists/match/{song_id}`
 - Pitch submission tracking
+- Frontend: `/playlists` page
 
 **Week 4 — Component 3: SubmitHub Integration**
 - SubmitHub campaign + submission models
@@ -125,7 +163,7 @@ music_manager/
 
 ## Database Schema
 
-### Defined (ORM models exist, no migration run yet)
+### Defined (ORM models exist)
 - `users` — id, email, hashed_password, name, is_active, created_at
 - `songs` — id, user_id (FK), spotify_track_id (unique), title, artist_name, album_name, release_date, duration_ms, spotify_url, album_image_url, popularity, story, mood_tags (JSON), themes (JSON), comparable_artists (JSON), created_at, updated_at
 
@@ -148,83 +186,110 @@ music_manager/
 - ✅ `POST /` — create (fetches Spotify metadata)
 - ✅ `GET /` — list all for user
 - ✅ `GET /{id}` — get one
-- ⏳ `PATCH /{id}` — update manual fields (Week 2)
+- ✅ `PATCH /{id}` — update manual fields (partial, exclude_unset)
 - ✅ `DELETE /{id}` — delete
 
 ### All other endpoints — not started
 
 ---
 
-## Frontend Pages
+## Frontend Routes
 
-### Completed
-_None — Week 2_
+| Route | Page | Status |
+|-------|------|--------|
+| `/` | → redirect to `/songs` | ✅ |
+| `/login` | LoginPage | ✅ |
+| `/songs` | SongsPage | ✅ |
+| `/songs/new` | SongNewPage | ✅ |
+| `/songs/:id` | SongDetailPage | ✅ |
+| `/playlists` | — | ⏳ Week 3 |
+| `/campaigns` | — | ⏳ Week 4–5 |
+| `/dashboard` | — | ⏳ Week 6 |
+| `/opportunities` | — | ⏳ Week 7 |
 
-### Pending
-- ⏳ `/login` + `/register`
-- ⏳ `/songs` — catalog list
-- ⏳ `/songs/new` — add song via Spotify URL
-- ⏳ `/songs/{id}` — view + edit manual fields
-- ⏳ `/playlists` — discovery + match
-- ⏳ `/campaigns` — campaign management
-- ⏳ `/dashboard` — health score + insights
-- ⏳ `/opportunities` — post angle suggestions
+> **Note:** No registration page exists in the UI. To create your account, use Swagger at `localhost:8000/docs` → `POST /api/v1/auth/register`. The single-user lock means this is a one-time step.
 
 ---
 
 ## Environment & Dev Setup
 
-### Runtime
-- **Python:** 3.13.5 (in `.venv/` at project root)
-- **Venv activate:** `.venv\Scripts\Activate.ps1`
-- **Run server:** from `backend/` → `.venv/Scripts/uvicorn main:app --reload`
-- **Run tests:** from `backend/` → `.venv/Scripts/python -m pytest tests/ -v`
-- **PostgreSQL:** NOT installed locally — using SQLite in-memory for all tests
+### Running locally
 
-### Required `.env` (copy from `backend/.env.example`)
-```
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/music_manager
-TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/music_manager_test
-SECRET_KEY=<generate random>
-SPOTIFY_CLIENT_ID=<from Spotify Dashboard>
-SPOTIFY_CLIENT_SECRET=<from Spotify Dashboard>
-ANTHROPIC_API_KEY=<from Anthropic Console>
-```
-
-### Running migrations (once PostgreSQL is available)
+**Backend** (from `backend/`):
 ```powershell
-cd backend
-alembic revision --autogenerate -m "initial schema"
-alembic upgrade head
+# One-time: create the SQLite database
+..\.venv\Scripts\python -c "from app.database import engine, Base; import app.models.user, app.models.song; Base.metadata.create_all(engine)"
+
+# Start the server
+..\.venv\Scripts\uvicorn main:app --reload
+# → http://localhost:8000
+# → http://localhost:8000/docs  (Swagger UI)
 ```
+
+**Frontend** (from `frontend/`, use Git Bash):
+```bash
+npm run dev
+# → http://localhost:5173
+```
+
+### Required `backend/.env`
+```
+DATABASE_URL=sqlite:///./music_manager.db
+SECRET_KEY=<any long random string>
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
+SPOTIFY_CLIENT_ID=<from Spotify Developer Dashboard>
+SPOTIFY_CLIENT_SECRET=<from Spotify Developer Dashboard>
+ENVIRONMENT=development
+LOG_LEVEL=INFO
+```
+
+> Spotify credentials: free at developer.spotify.com/dashboard — create an app, select "Web API", copy Client ID + Secret. Uses Client Credentials flow (no user OAuth, no redirect URI actually called).
+
+### Running tests
+```powershell
+# from backend/
+..\.venv\Scripts\python -m pytest tests/ -v         # all 36 tests
+..\.venv\Scripts\python -m pytest tests/ -k "us003"  # one user story
+```
+
+### Windows notes
+- Use **Git Bash** for `npm run dev` — PowerShell execution policy blocks `.ps1` scripts on corporate machines
+- Python venv: activate with `.venv\Scripts\Activate.ps1` in PowerShell, or prefix commands with `..\.venv\Scripts\python`
 
 ---
 
 ## Known Gotchas & Reminders
 
 **Python 3.13 compatibility**
-- `passlib[bcrypt]` crashes on Python 3.13 — we use `bcrypt` directly instead. Do not re-add passlib.
+- `passlib[bcrypt]` crashes on Python 3.13 — we use `bcrypt` directly. Do not re-add passlib.
 - `psycopg2-binary` requires `>=2.9.10` for Python 3.13 wheels.
 
-**SQLite vs PostgreSQL in tests**
+**SQLite vs PostgreSQL**
 - Tests use `sqlite:///:memory:` — no external DB needed.
-- SQLite requires Python `date` objects, not strings. Always call `date.fromisoformat(raw[:10])` when converting Spotify's `release_date` string before inserting.
+- Local dev uses `sqlite:///./music_manager.db` (created by the one-liner above).
+- SQLite requires Python `date` objects, not strings. Always call `date.fromisoformat(raw[:10])` when converting Spotify's `release_date` before inserting.
 - Spotify `release_date` can be `"2024"`, `"2024-01"`, or `"2024-01-15"` — the `[:10]` slice handles all safely.
 
 **SQLite transaction isolation in tests**
-- Each test wraps a DB transaction that is rolled back after the test.
-- Never call `db.rollback()` directly inside endpoint code — it rolls back the outer test transaction and breaks subsequent operations.
-- Use `with db.begin_nested(): db.add(obj); db.flush()` to catch `IntegrityError` safely with a savepoint.
+- Each test wraps in a DB transaction that rolls back after the test.
+- Never call `db.rollback()` inside endpoint code — it rolls back the outer test transaction.
+- Use `with db.begin_nested(): db.add(obj); db.flush()` to catch `IntegrityError` safely.
+
+**Always commit after writes**
+- `db.flush()` alone does NOT persist data — session closes with a rollback if no `db.commit()`.
+- Pattern: `with db.begin_nested(): db.add(obj); db.flush()` → catch IntegrityError → `db.commit(); db.refresh(obj)`.
+- Tests don't catch missing commits because the test session's open transaction keeps flushed data visible.
 
 **Single-user tool**
-- Registration is locked after the first user is created. Intentional — this is a personal tool. The 403 response includes "single-user" in the detail string (tested explicitly).
+- Registration is locked after the first user. Intentional. The 403 detail string contains "single-user" (tested explicitly).
 
 **Spotify URL parsing**
-- `parse_spotify_track_id()` in `app/services/spotify.py` handles: full URLs, query-param URLs, `spotify:track:` URIs, and raw 22-char IDs. Raises `ValueError` for anything else (album/artist URLs, wrong domains, empty input).
-- Always use this function for validation — the Pydantic `field_validator` on `SongCreate` calls it automatically.
+- `parse_spotify_track_id()` handles: full URLs, query-param URLs, `spotify:track:` URIs, raw 22-char IDs.
+- Always use this — the Pydantic `field_validator` on `SongCreate` calls it automatically.
 
 **Test mocking**
-- All Spotify API calls are mocked in integration tests: `patch("app.api.songs.SpotifyService")`.
+- All Spotify API calls are mocked: `patch("app.api.songs.SpotifyService")`.
 - All Anthropic calls must be mocked in future tests — never make real API calls in tests.
 
 ---
@@ -235,15 +300,17 @@ alembic upgrade head
 - **Tests:** SQLite in-memory with `StaticPool` — zero external dependencies
 - **JWT:** HS256 via `python-jose`, 7-day expiry
 - **DB session in tests:** rollback-per-test via nested connection/transaction
-- **Date normalisation:** Spotify returns string dates; we convert to `date` object at the API layer before passing to ORM
+- **Date normalisation:** Spotify returns string dates; convert to `date` object at API layer before ORM
 - **Duplicate protection:** `begin_nested()` savepoint on song create to catch `IntegrityError` cleanly
+- **Partial updates:** `model_dump(exclude_unset=True)` on PATCH — only sent fields are written
+- **Frontend state management:** TanStack Query for server state; local `useState` for form fields
+- **Spotify auth:** Client Credentials flow (server-to-server) — no user OAuth, no redirect URI needed
 
 ---
 
-## Next Steps (Week 2)
+## Next Steps (Week 3)
 
-1. `PATCH /api/v1/songs/{id}` — update manual fields (story, mood_tags, themes, comparable_artists) — TDD
-2. Frontend scaffold: React 18 + Vite + TailwindCSS + React Router + TanStack Query
-3. Login + Register pages (wire to `/api/v1/auth`)
-4. Songs list page + Add Song page (wire to `/api/v1/songs`)
-5. Song detail/edit page (wire to `PATCH /api/v1/songs/{id}`)
+1. Component 2 — Israeli Playlist & Radio Discovery (backend TDD first)
+2. Playlist seed data — curated list of Israeli playlists + Galei Tzahal stations
+3. Match algorithm — score songs against playlists by genre/mood/language
+4. Frontend — `/playlists` page with match results and pitch submission tracking
