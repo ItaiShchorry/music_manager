@@ -38,6 +38,13 @@ class SongCreate(BaseModel):
         return v
 
 
+class SongUpdate(BaseModel):
+    story: str | None = None
+    mood_tags: list[str] | None = None
+    themes: list[str] | None = None
+    comparable_artists: list[str] | None = None
+
+
 class SongResponse(BaseModel):
     id: int
     spotify_track_id: str
@@ -125,6 +132,26 @@ def get_song(
     song = db.query(Song).filter(Song.id == song_id, Song.user_id == current_user.id).first()
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
+    return song
+
+
+@router.patch("/{song_id}", response_model=SongResponse)
+def update_song(
+    song_id: int,
+    body: SongUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    song = db.query(Song).filter(Song.id == song_id, Song.user_id == current_user.id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+
+    updates = body.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(song, field, value)
+
+    db.flush()
+    logger.info(f"Updated song id={song_id} fields={list(updates.keys())} for user={current_user.id}")
     return song
 
 
