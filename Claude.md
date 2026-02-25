@@ -72,7 +72,7 @@ Always consult these before starting work:
 ### Before Every Commit
 - Run code formatter
 - Run code review hook
-- Ensure all tests pass (when implemented)
+- Run `pytest tests/ -v` — ALL tests must be green. No exceptions.
 
 ---
 
@@ -99,12 +99,53 @@ logger.debug(f"API response: {response.json()}")
 logger.error(f"Failed to fetch track: {str(e)}", exc_info=True)
 ```
 
-### Testing & Debugging
+### Test-Driven Development (MANDATORY)
 
-1. **Use Playwright MCP for web testing** (already configured in settings.json)
-2. Run the application and test manually after significant changes
-3. Use browser DevTools for frontend issues
-4. Check backend logs for API issues
+**Every User Story must follow this cycle — no exceptions:**
+
+```
+1. READ   the US acceptance criteria in PRD.md
+2. WRITE  the test file with input/output tuples BEFORE any implementation
+3. RUN    pytest → tests MUST FAIL (red) to confirm they're real tests
+4. BUILD  the implementation
+5. RUN    pytest → tests MUST PASS (green)
+6. COMMIT tests + implementation together
+```
+
+**Test file naming:** `test_us{number}_{short_description}.py`
+- Maps 1:1 to User Story numbers in PRD.md
+- Lives in `backend/tests/unit/` (pure logic) or `backend/tests/integration/` (DB + HTTP)
+
+**Input/output tuple pattern — define cases FIRST:**
+```python
+# Each test file starts with explicit cases before any test function
+CASES = [
+    (input_1, expected_output_1),   # happy path
+    (input_2, expected_output_2),   # edge case
+    (input_3, expected_output_3),   # error/invalid input
+]
+
+@pytest.mark.parametrize("input, expected", CASES)
+def test_feature(input, expected):
+    assert my_function(input) == expected
+```
+
+**Minimum cases per test:**
+- 1 happy path (valid, typical input)
+- 1+ edge cases (boundary values, empty, None)
+- 1 invalid/error case (bad input → correct error response)
+
+**Claude API calls in tests:** Always mock the Anthropic client. Never make real API calls in tests.
+
+**Running tests:**
+```powershell
+# From backend/ directory
+pytest tests/ -v                    # all tests
+pytest tests/ -k "us008" -v         # one user story
+pytest tests/unit/ -v               # unit tests only
+```
+
+**Before every commit:** All tests must be green. A failing test blocks the commit.
 
 ### Database Migrations
 
