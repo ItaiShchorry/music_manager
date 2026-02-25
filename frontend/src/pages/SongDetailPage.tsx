@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getSong, updateSong } from '../api/songs'
 import type { Song } from '../types'
@@ -76,16 +76,15 @@ export function SongDetailPage() {
   const [moodTags, setMoodTags] = useState<string[]>([])
   const [themes, setThemes] = useState<string[]>([])
   const [comparableArtists, setComparableArtists] = useState<string[]>([])
-  const [formInitialised, setFormInitialised] = useState(false)
-
   // Initialise form from query data once
-  if (song && !formInitialised) {
-    setStory(song.story ?? '')
-    setMoodTags(song.mood_tags ?? [])
-    setThemes(song.themes ?? [])
-    setComparableArtists(song.comparable_artists ?? [])
-    setFormInitialised(true)
-  }
+  useEffect(() => {
+    if (song) {
+      setStory(song.story ?? '')
+      setMoodTags(song.mood_tags ?? [])
+      setThemes(song.themes ?? [])
+      setComparableArtists(song.comparable_artists ?? [])
+    }
+  }, [song?.id])  // re-run only if navigating to a different song
 
   const mutation = useMutation({
     mutationFn: (patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists'>>) =>

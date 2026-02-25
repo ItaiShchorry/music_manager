@@ -109,6 +109,8 @@ def create_song(
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Song already exists in your catalog")
 
+    db.commit()
+    db.refresh(song)
     logger.info(f"Song created id={song.id} title={song.title!r}")
     return song
 
@@ -150,7 +152,8 @@ def update_song(
     for field, value in updates.items():
         setattr(song, field, value)
 
-    db.flush()
+    db.commit()
+    db.refresh(song)
     logger.info(f"Updated song id={song_id} fields={list(updates.keys())} for user={current_user.id}")
     return song
 
