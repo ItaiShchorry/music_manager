@@ -14,6 +14,9 @@ from app.database import Base
 # Import all models so Alembic can detect them
 import app.models.user  # noqa: F401
 import app.models.song  # noqa: F401
+import app.models.playlist  # noqa: F401
+import app.models.radio_station  # noqa: F401
+import app.models.pitch_submission  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

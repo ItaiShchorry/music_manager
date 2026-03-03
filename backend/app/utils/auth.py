@@ -2,9 +2,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -47,7 +48,7 @@ def get_current_user(
         user_id: str | None = payload.get("sub")
         if user_id is None:
             raise credentials_error
-    except JWTError:
+    except InvalidTokenError:
         logger.warning("JWT decode failed")
         raise credentials_error
 

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { DiscoverPage } from './pages/DiscoverPage'
 import { LoginPage } from './pages/LoginPage'
 import { SongDetailPage } from './pages/SongDetailPage'
 import { SongNewPage } from './pages/SongNewPage'
@@ -36,6 +37,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <SongDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/discover"
+            element={
+              <ProtectedRoute>
+                <DiscoverPage />
               </ProtectedRoute>
             }
           />

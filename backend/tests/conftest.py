@@ -12,6 +12,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
+from app.models.playlist import Playlist
+from app.models.pitch_submission import PitchSubmission  # noqa: F401 — registers table
+from app.models.radio_station import RadioStation
 from app.models.song import Song
 from app.models.user import User
 from app.utils.auth import create_access_token, hash_password
@@ -112,3 +115,40 @@ def sample_song(db, sample_user) -> Song:
     db.add(song)
     db.flush()
     return song
+
+
+@pytest.fixture()
+def sample_playlist(db) -> Playlist:
+    playlist = Playlist(
+        name="Israeli Indie",
+        spotify_id="test_spotify_playlist_id",
+        curator_name="Test Curator",
+        curator_contact="curator@example.com",
+        follower_count=2100,
+        genres=["indie", "alternative"],
+        languages=["hebrew"],
+        mood_tags=["melancholic", "upbeat"],
+        submission_method="email",
+        is_active=True,
+    )
+    db.add(playlist)
+    db.flush()
+    return playlist
+
+
+@pytest.fixture()
+def sample_radio_station(db) -> RadioStation:
+    station = RadioStation(
+        name="Kan 88",
+        name_hebrew="כאן 88",
+        station_type="national",
+        contact_email="88music@kan.org.il",
+        genres_focus=["indie", "alternative", "world"],
+        best_for=["new artists", "indie", "alternative"],
+        submission_guidelines="Email MP3 + bio to 88music@kan.org.il",
+        response_time="2-4 weeks",
+        reach_description="National broadcast — ~200k weekly listeners",
+    )
+    db.add(station)
+    db.flush()
+    return station

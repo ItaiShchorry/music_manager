@@ -16,6 +16,21 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting Music Manager API — environment={settings.environment}")
+    # Seed lookup tables on first boot (idempotent — skips if rows already exist)
+    from app.database import SessionLocal
+    from app.services.seed import seed_playlists, seed_radio_stations
+    db = SessionLocal()
+    try:
+        seed_playlists(db)
+        seed_radio_stations(db)
+        db.commit()
+    except Exception as exc:
+        # Tables not yet created (pre-migration) or any other startup DB error.
+        # Log and continue — seed will run after the first successful migration.
+        logger.warning(f"Seed skipped on startup: {exc}")
+        db.rollback()
+    finally:
+        db.close()
     yield
     logger.info("Shutting down Music Manager API")
 
@@ -35,10 +50,13 @@ app.add_middleware(
 )
 
 # Routers
-from app.api import auth, songs  # noqa: E402
+from app.api import auth, pitches, playlists, radio_stations, songs  # noqa: E402
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(songs.router, prefix="/api/v1")
+app.include_router(playlists.router, prefix="/api/v1")
+app.include_router(radio_stations.router, prefix="/api/v1")
+app.include_router(pitches.router, prefix="/api/v1")
 
 
 @app.get("/health")

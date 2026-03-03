@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getPitchesForSong, updatePitch } from '../api/pitches'
 import { getSong, updateSong } from '../api/songs'
-import type { Song } from '../types'
+import { Nav } from '../components/Nav'
+import type { PitchSubmission, Song } from '../types'
 
 // ---------------------------------------------------------------------------
 // Tag input component (comma-separated chips)
@@ -60,6 +62,51 @@ function TagInput({ value, onChange, placeholder }: TagInputProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Status badge
+// ---------------------------------------------------------------------------
+const STATUS_COLORS: Record<string, string> = {
+  sent: 'bg-blue-100 text-blue-800',
+  responded: 'bg-yellow-100 text-yellow-800',
+  added: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-800',
+  no_response: 'bg-gray-100 text-gray-600',
+}
+
+// ---------------------------------------------------------------------------
+// Pitch row
+// ---------------------------------------------------------------------------
+interface PitchRowProps {
+  pitch: PitchSubmission
+  onStatusChange: (id: number, status: string) => void
+}
+
+function PitchRow({ pitch, onStatusChange }: PitchRowProps) {
+  const date = new Date(pitch.pitched_date).toLocaleDateString()
+  const target = pitch.target_name ?? (pitch.target_type === 'playlist'
+    ? `Playlist #${pitch.playlist_id}`
+    : `Radio #${pitch.radio_station_id}`)
+
+  return (
+    <tr className="border-t border-gray-100">
+      <td className="py-2 pr-4 text-sm text-gray-700">{target}</td>
+      <td className="py-2 pr-4 text-sm text-gray-500">{date}</td>
+      <td className="py-2 pr-4 text-sm text-gray-500">{pitch.pitch_method}</td>
+      <td className="py-2">
+        <select
+          value={pitch.status}
+          onChange={(e) => onStatusChange(pitch.id, e.target.value)}
+          className={`text-xs font-medium px-2 py-1 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer ${STATUS_COLORS[pitch.status] ?? 'bg-gray-100 text-gray-600'}`}
+        >
+          {['sent', 'responded', 'added', 'rejected', 'no_response'].map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </td>
+    </tr>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export function SongDetailPage() {
@@ -72,25 +119,42 @@ export function SongDetailPage() {
     queryFn: () => getSong(Number(id)),
   })
 
+  const { data: pitches = [] } = useQuery({
+    queryKey: ['pitches', Number(id)],
+    queryFn: () => getPitchesForSong(Number(id)),
+  })
+
   const [story, setStory] = useState<string>('')
   const [moodTags, setMoodTags] = useState<string[]>([])
   const [themes, setThemes] = useState<string[]>([])
   const [comparableArtists, setComparableArtists] = useState<string[]>([])
-  // Initialise form from query data once
+  const [genre, setGenre] = useState<string>('')
+  const [language, setLanguage] = useState<string>('')
+
   useEffect(() => {
     if (song) {
       setStory(song.story ?? '')
       setMoodTags(song.mood_tags ?? [])
       setThemes(song.themes ?? [])
       setComparableArtists(song.comparable_artists ?? [])
+      setGenre(song.genre ?? '')
+      setLanguage(song.language ?? '')
     }
-  }, [song?.id])  // re-run only if navigating to a different song
+  }, [song?.id])
 
   const mutation = useMutation({
-    mutationFn: (patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists'>>) =>
+    mutationFn: (patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists' | 'genre' | 'language'>>) =>
       updateSong(Number(id), patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['song', Number(id)] })
+    },
+  })
+
+  const pitchMutation = useMutation({
+    mutationFn: ({ pitchId, status }: { pitchId: number; status: string }) =>
+      updatePitch(pitchId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pitches', Number(id)] })
     },
   })
 
@@ -100,6 +164,8 @@ export function SongDetailPage() {
       mood_tags: moodTags.length ? moodTags : null,
       themes: themes.length ? themes : null,
       comparable_artists: comparableArtists.length ? comparableArtists : null,
+      genre: genre || null,
+      language: language || null,
     })
   }
 
@@ -126,16 +192,17 @@ export function SongDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <Nav />
+
+      <main className="max-w-3xl mx-auto p-6 space-y-8">
+        {/* Back link */}
         <button
           onClick={() => navigate('/songs')}
           className="text-sm text-indigo-600 hover:underline"
         >
           ← Back to songs
         </button>
-      </header>
 
-      <main className="max-w-3xl mx-auto p-6 space-y-8">
         {/* Spotify metadata (read-only) */}
         <section className="bg-white rounded-2xl shadow-sm p-6 flex gap-6">
           {song.album_image_url ? (
@@ -176,6 +243,32 @@ export function SongDetailPage() {
         {/* Manual fields (editable) */}
         <section className="bg-white rounded-2xl shadow-sm p-6 space-y-5">
           <h3 className="text-lg font-semibold text-gray-900">Song Profile</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
+              <input
+                type="text"
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
+                placeholder="e.g. mainstream Hebrew pop"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">— select —</option>
+                <option value="hebrew">Hebrew</option>
+                <option value="english">English</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Story</label>
@@ -230,6 +323,52 @@ export function SongDetailPage() {
               <span className="text-sm text-red-600">Save failed. Please try again.</span>
             )}
           </div>
+        </section>
+
+        {/* Pitch history */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Pitch History
+              {pitches.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-400">({pitches.length})</span>
+              )}
+            </h3>
+            <Link
+              to={`/discover?song=${id}`}
+              className="text-xs text-indigo-600 hover:underline"
+            >
+              + Discover & pitch →
+            </Link>
+          </div>
+
+          {pitches.length === 0 ? (
+            <p className="text-sm text-gray-400">No pitches logged yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-xs text-gray-400 uppercase tracking-wide">
+                    <th className="pb-2 pr-4 font-medium">Target</th>
+                    <th className="pb-2 pr-4 font-medium">Date</th>
+                    <th className="pb-2 pr-4 font-medium">Method</th>
+                    <th className="pb-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pitches.map((pitch) => (
+                    <PitchRow
+                      key={pitch.id}
+                      pitch={pitch}
+                      onStatusChange={(pitchId, status) =>
+                        pitchMutation.mutate({ pitchId, status })
+                      }
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </main>
     </div>

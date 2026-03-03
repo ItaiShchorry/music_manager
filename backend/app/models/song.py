@@ -30,6 +30,8 @@ class Song(Base):
     mood_tags: Mapped[list | None] = mapped_column(JSON)
     themes: Mapped[list | None] = mapped_column(JSON)
     comparable_artists: Mapped[list | None] = mapped_column(JSON)
+    genre: Mapped[str | None] = mapped_column(String(255))
+    language: Mapped[str | None] = mapped_column(String(50))
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
