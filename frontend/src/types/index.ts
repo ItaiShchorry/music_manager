@@ -75,6 +75,7 @@ export interface PitchSubmission {
   id: number
   song_id: number
   target_type: 'playlist' | 'radio'
+  target_name: string | null
   playlist_id: number | null
   radio_station_id: number | null
   pitched_date: string

@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info(f"Starting Music Manager API — environment={settings.environment}")
     # Seed lookup tables on first boot (idempotent — skips if rows already exist)
-    from sqlalchemy.exc import OperationalError
     from app.database import SessionLocal
     from app.services.seed import seed_playlists, seed_radio_stations
     db = SessionLocal()
@@ -25,9 +24,10 @@ async def lifespan(app: FastAPI):
         seed_playlists(db)
         seed_radio_stations(db)
         db.commit()
-    except OperationalError:
-        # Tables not created yet (pre-migration) — seed will run after first migration
-        logger.warning("Seed skipped: tables not found. Run migrations first.")
+    except Exception as exc:
+        # Tables not yet created (pre-migration) or any other startup DB error.
+        # Log and continue — seed will run after the first successful migration.
+        logger.warning(f"Seed skipped on startup: {exc}")
         db.rollback()
     finally:
         db.close()

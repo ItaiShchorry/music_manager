@@ -37,7 +37,9 @@ export function DiscoverPage() {
   }
 
   const handlePitched = () => {
-    queryClient.invalidateQueries({ queryKey: ['pitches'] })
+    if (selectedSongId !== null) {
+      queryClient.invalidateQueries({ queryKey: ['pitches', selectedSongId] })
+    }
   }
 
   return (

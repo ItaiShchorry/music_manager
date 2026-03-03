@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getPitchesForSong, updatePitch } from '../api/pitches'
 import { getSong, updateSong } from '../api/songs'
 import { Nav } from '../components/Nav'
@@ -82,9 +82,9 @@ interface PitchRowProps {
 
 function PitchRow({ pitch, onStatusChange }: PitchRowProps) {
   const date = new Date(pitch.pitched_date).toLocaleDateString()
-  const target = pitch.target_type === 'playlist'
+  const target = pitch.target_name ?? (pitch.target_type === 'playlist'
     ? `Playlist #${pitch.playlist_id}`
-    : `Radio #${pitch.radio_station_id}`
+    : `Radio #${pitch.radio_station_id}`)
 
   return (
     <tr className="border-t border-gray-100">
@@ -334,12 +334,12 @@ export function SongDetailPage() {
                 <span className="ml-2 text-sm font-normal text-gray-400">({pitches.length})</span>
               )}
             </h3>
-            <a
-              href={`/discover?song=${id}`}
+            <Link
+              to={`/discover?song=${id}`}
               className="text-xs text-indigo-600 hover:underline"
             >
               + Discover & pitch →
-            </a>
+            </Link>
           </div>
 
           {pitches.length === 0 ? (

@@ -177,6 +177,7 @@ def delete_song(
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     db.delete(song)
+    db.commit()
     logger.info(f"Deleted song id={song_id} for user={current_user.id}")
 
 

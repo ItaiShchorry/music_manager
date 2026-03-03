@@ -13,9 +13,11 @@ export function RadioStationCard({ station, recommended, songId, onPitched }: Pr
   const [showModal, setShowModal] = useState(false)
   const [method, setMethod] = useState('email')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handlePitch = async () => {
     setLoading(true)
+    setError(null)
     try {
       await createPitch({
         song_id: songId,
@@ -25,6 +27,8 @@ export function RadioStationCard({ station, recommended, songId, onPitched }: Pr
       })
       setShowModal(false)
       onPitched()
+    } catch {
+      setError('Failed to log pitch. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -96,6 +100,7 @@ export function RadioStationCard({ station, recommended, songId, onPitched }: Pr
                 <option value="submithub">SubmitHub</option>
               </select>
             </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-3 pt-1">
               <button
                 onClick={handlePitch}
@@ -105,7 +110,7 @@ export function RadioStationCard({ station, recommended, songId, onPitched }: Pr
                 {loading ? 'Logging…' : 'Confirm'}
               </button>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setError(null) }}
                 className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancel
