@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getPitchesForSong, updatePitch } from '../api/pitches'
 import { getSong, updateSong } from '../api/songs'
 import { Nav } from '../components/Nav'
+import { ContentPanel } from '../components/content/ContentPanel'
 import type { PitchSubmission, Song } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -324,6 +325,9 @@ export function SongDetailPage() {
             )}
           </div>
         </section>
+
+        {/* Content generation */}
+        <ContentPanel songId={Number(id)} />
 
         {/* Pitch history */}
         <section className="bg-white rounded-2xl shadow-sm p-6">

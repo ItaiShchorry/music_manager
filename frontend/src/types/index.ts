@@ -71,6 +71,19 @@ export interface MatchResponse {
   radio_stations: RadioStationMatchEntry[]
 }
 
+export interface GeneratedContent {
+  id: number
+  song_id: number
+  post_type: string
+  platform: string
+  tone: string
+  caption_hebrew: string | null
+  caption_english: string | null
+  hashtags: string[] | null
+  character_count: number | null
+  created_at: string
+}
+
 export interface PitchSubmission {
   id: number
   song_id: number
