@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { listSongs } from '../api/songs'
+import { Nav } from '../components/Nav'
 import { SongCard } from '../components/songs/SongCard'
 
 export function SongsPage() {
@@ -12,6 +13,7 @@ export function SongsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Nav />
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">My Songs</h1>
         <button

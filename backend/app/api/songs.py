@@ -6,9 +6,14 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.playlists import PlaylistResponse
+from app.api.radio_stations import RadioStationResponse
 from app.database import get_db
+from app.models.playlist import Playlist
+from app.models.radio_station import RadioStation
 from app.models.song import Song
 from app.models.user import User
+from app.services.playlist_matcher import score_playlist, score_radio_station
 from app.services.spotify import SpotifyService, parse_spotify_track_id
 from app.utils.auth import get_current_user
 
@@ -43,6 +48,8 @@ class SongUpdate(BaseModel):
     mood_tags: list[str] | None = None
     themes: list[str] | None = None
     comparable_artists: list[str] | None = None
+    genre: str | None = None
+    language: str | None = None
 
 
 class SongResponse(BaseModel):
@@ -60,6 +67,8 @@ class SongResponse(BaseModel):
     mood_tags: list | None
     themes: list | None
     comparable_artists: list | None
+    genre: str | None
+    language: str | None
 
     model_config = {"from_attributes": True}
 
@@ -169,3 +178,50 @@ def delete_song(
         raise HTTPException(status_code=404, detail="Song not found")
     db.delete(song)
     logger.info(f"Deleted song id={song_id} for user={current_user.id}")
+
+
+# ---------------------------------------------------------------------------
+# Match endpoint
+# ---------------------------------------------------------------------------
+
+class PlaylistMatchEntry(BaseModel):
+    playlist: PlaylistResponse
+    score: int
+    reasons: list[str]
+
+
+class RadioStationMatchEntry(BaseModel):
+    station: RadioStationResponse
+    recommended: bool
+
+
+class MatchResponse(BaseModel):
+    playlists: list[PlaylistMatchEntry]
+    radio_stations: list[RadioStationMatchEntry]
+
+
+@router.get("/{song_id}/matches", response_model=MatchResponse)
+def get_matches(
+    song_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    song = db.query(Song).filter(Song.id == song_id, Song.user_id == current_user.id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+
+    playlists = db.query(Playlist).filter(Playlist.is_active == True).all()  # noqa: E712
+    playlist_entries = []
+    for pl in playlists:
+        sc, reasons = score_playlist(song, pl)
+        playlist_entries.append(PlaylistMatchEntry(playlist=pl, score=sc, reasons=reasons))
+    playlist_entries.sort(key=lambda e: e.score, reverse=True)
+
+    stations = db.query(RadioStation).all()
+    station_entries = []
+    for st in stations:
+        _label, recommended = score_radio_station(song, st)
+        station_entries.append(RadioStationMatchEntry(station=st, recommended=recommended))
+
+    logger.info(f"Matches computed for song_id={song_id} user={current_user.id}")
+    return MatchResponse(playlists=playlist_entries, radio_stations=station_entries)
