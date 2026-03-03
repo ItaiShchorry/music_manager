@@ -292,3 +292,101 @@ def test_list_content_requires_auth(client, sample_song):
 def test_list_content_song_not_found(client, auth_headers):
     r = client.get("/api/v1/songs/99999/content", headers=auth_headers)
     assert r.status_code == 404
+
+
+def test_generate_content_bare_song(client, db, sample_user, auth_headers):
+    """Song with no manual profile fields (no story, mood_tags, genre, language)
+    still generates content — the service fills in sensible defaults in the prompt."""
+    bare_song = Song(
+        user_id=sample_user.id,
+        spotify_track_id="bare_song_content_test",
+        title="Bare Song",
+        artist_name="Test Artist",
+        release_date=date(2024, 1, 1),
+    )
+    db.add(bare_song)
+    db.flush()
+
+    mock_cls, mock_client = _make_mock_anthropic()
+
+    with patch("app.services.content_generator.anthropic", mock_cls) as patched:
+        patched.Anthropic.return_value = mock_client
+
+        r = client.post(
+            f"/api/v1/songs/{bare_song.id}/content",
+            json={"post_type": "release", "tones": ["emotional"], "platforms": ["instagram"]},
+            headers=auth_headers,
+        )
+
+    assert r.status_code == 201, r.text
+    assert len(r.json()) == 1
+
+
+def test_generate_content_invalid_tone_rejected(client, auth_headers, sample_song):
+    """Invalid tone value in array → 422 validation error."""
+    r = client.post(
+        f"/api/v1/songs/{sample_song.id}/content",
+        json={"post_type": "release", "tones": ["emotional", "invalid_tone"]},
+        headers=auth_headers,
+    )
+    assert r.status_code == 422
+
+
+def test_generate_content_invalid_platform_rejected(client, auth_headers, sample_song):
+    """Invalid platform value in array → 422 validation error."""
+    r = client.post(
+        f"/api/v1/songs/{sample_song.id}/content",
+        json={"post_type": "release", "platforms": ["instagram", "twitter"]},
+        headers=auth_headers,
+    )
+    assert r.status_code == 422
+
+
+def test_generate_content_empty_tones_rejected(client, auth_headers, sample_song):
+    """Empty tones array → 422 (must select at least one)."""
+    r = client.post(
+        f"/api/v1/songs/{sample_song.id}/content",
+        json={"post_type": "release", "tones": [], "platforms": ["instagram"]},
+        headers=auth_headers,
+    )
+    assert r.status_code == 422
+
+
+def test_generate_content_empty_platforms_rejected(client, auth_headers, sample_song):
+    """Empty platforms array → 422 (must select at least one)."""
+    r = client.post(
+        f"/api/v1/songs/{sample_song.id}/content",
+        json={"post_type": "release", "tones": ["emotional"], "platforms": []},
+        headers=auth_headers,
+    )
+    assert r.status_code == 422
+
+
+def test_generate_content_null_hashtags_in_response(client, db, sample_user, auth_headers):
+    """Claude returning null hashtag arrays doesn't crash — stored as empty list."""
+    song = _song_with_profile(db, sample_user)
+
+    null_hashtags_response = {
+        "caption_hebrew": "שיר חדש! 🎵",
+        "caption_english": "New song!",
+        "hashtags_hebrew": None,
+        "hashtags_english": None,
+    }
+    mock_msg = MagicMock()
+    mock_msg.content = [MagicMock(text=json.dumps(null_hashtags_response))]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_msg
+    mock_cls = MagicMock(return_value=mock_client)
+
+    with patch("app.services.content_generator.anthropic", mock_cls) as patched:
+        patched.Anthropic.return_value = mock_client
+
+        r = client.post(
+            f"/api/v1/songs/{song.id}/content",
+            json={"post_type": "release", "tones": ["emotional"], "platforms": ["instagram"]},
+            headers=auth_headers,
+        )
+
+    assert r.status_code == 201, r.text
+    item = r.json()[0]
+    assert item["hashtags"] == []  # null → empty list, no crash

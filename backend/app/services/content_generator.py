@@ -55,7 +55,7 @@ class HebrewContentGenerator:
                 caption_he = self._trim(raw.get("caption_hebrew", ""), platform)
                 caption_en = self._trim(raw.get("caption_english", ""), platform)
                 hashtags = (
-                    raw.get("hashtags_hebrew", []) + raw.get("hashtags_english", [])
+                    (raw.get("hashtags_hebrew") or []) + (raw.get("hashtags_english") or [])
                 )[:10]
 
                 results.append(
@@ -85,6 +85,8 @@ class HebrewContentGenerator:
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
         )
+        if not response.content:
+            raise ValueError("Claude returned an empty response")
         text = response.content[0].text
         return self._parse_json(text)
 
@@ -139,9 +141,9 @@ Return ONLY a JSON object — no markdown, no explanation, no code fences:
                     return json.loads(match.group())
                 except json.JSONDecodeError:
                     pass
-            logger.warning("Could not parse Claude JSON response; returning raw text")
+            logger.error(f"Could not parse Claude JSON response: {text[:200]!r}")
             return {
-                "caption_hebrew": text[:200],
+                "caption_hebrew": "",
                 "caption_english": "",
                 "hashtags_hebrew": [],
                 "hashtags_english": [],

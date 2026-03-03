@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,8 +26,12 @@ class ContentRequest(BaseModel):
     post_type: Literal["release", "bts", "story", "engagement", "thank_you"] = "release"
     key_message: str | None = None
     context: str | None = None
-    tones: list[Literal["emotional", "excited", "casual"]] = ["emotional", "excited", "casual"]
-    platforms: list[Literal["instagram", "facebook", "tiktok"]] = ["instagram", "facebook", "tiktok"]
+    tones: list[Literal["emotional", "excited", "casual"]] = Field(
+        default=["emotional", "excited", "casual"], min_length=1
+    )
+    platforms: list[Literal["instagram", "facebook", "tiktok"]] = Field(
+        default=["instagram", "facebook", "tiktok"], min_length=1
+    )
 
 
 class GeneratedContentResponse(BaseModel):
@@ -38,7 +42,7 @@ class GeneratedContentResponse(BaseModel):
     tone: str
     caption_hebrew: str | None
     caption_english: str | None
-    hashtags: list | None
+    hashtags: list[str] | None
     character_count: int | None
     created_at: datetime
 

@@ -132,7 +132,7 @@ export function ContentPanel({ songId }: Props) {
   const [keyMessage, setKeyMessage] = useState('')
   const [context, setContext] = useState('')
   const [selectedTones, setSelectedTones] = useState<Tone[]>(['emotional', 'excited', 'casual'])
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['instagram', 'facebook'])
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['instagram', 'facebook', 'tiktok'])
 
   // Previously generated content
   const { data: history = [] } = useQuery({
@@ -262,7 +262,9 @@ export function ContentPanel({ songId }: Props) {
           {mutation.isPending ? 'Generating…' : 'Generate Content'}
         </button>
         {mutation.isError && (
-          <span className="text-sm text-red-600">Generation failed. Please try again.</span>
+          <span className="text-sm text-red-600">
+            {(mutation.error as any)?.response?.data?.detail ?? 'Generation failed. Please try again.'}
+          </span>
         )}
       </div>
 
@@ -291,6 +293,11 @@ export function ContentPanel({ songId }: Props) {
               <ContentCard key={item.id} item={item} />
             ))}
           </div>
+          {history.length > 6 && (
+            <p className="text-xs text-gray-400 mt-3">
+              Showing 6 of {history.length} — generate new content to refresh.
+            </p>
+          )}
         </div>
       )}
     </section>

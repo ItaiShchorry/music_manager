@@ -19,7 +19,7 @@ class GeneratedContent(Base):
 
     caption_hebrew: Mapped[str | None] = mapped_column(Text)
     caption_english: Mapped[str | None] = mapped_column(Text)
-    hashtags: Mapped[list | None] = mapped_column(JSON)
+    hashtags: Mapped[list[str] | None] = mapped_column(JSON)
     character_count: Mapped[int | None] = mapped_column(Integer)
 
     created_at: Mapped[datetime] = mapped_column(

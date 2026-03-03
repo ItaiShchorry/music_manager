@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("caption_english", sa.Text(), nullable=True),
         sa.Column("hashtags", sa.JSON(), nullable=True),
         sa.Column("character_count", sa.Integer(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
 
 
