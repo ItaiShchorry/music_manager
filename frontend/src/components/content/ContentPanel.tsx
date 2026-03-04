@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import { useState } from 'react'
 import { generateContent, getGeneratedContent } from '../../api/content'
 import type { Platform, PostType, Tone } from '../../api/content'
@@ -263,7 +264,7 @@ export function ContentPanel({ songId }: Props) {
         </button>
         {mutation.isError && (
           <span className="text-sm text-red-600">
-            {(mutation.error as any)?.response?.data?.detail ?? 'Generation failed. Please try again.'}
+            {(mutation.error as AxiosError<{ detail: string }>)?.response?.data?.detail ?? 'Generation failed. Please try again.'}
           </span>
         )}
       </div>

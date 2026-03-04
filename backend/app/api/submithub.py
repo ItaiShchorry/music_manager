@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.campaign import Campaign
 from app.models.song import Song
 from app.models.submithub import SubmitHubCampaign, SubmitHubSubmission
 from app.models.user import User
@@ -134,6 +135,14 @@ def create_sh_campaign(
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
 
+    if body.campaign_id is not None:
+        camp = db.query(Campaign).filter(
+            Campaign.id == body.campaign_id,
+            Campaign.user_id == current_user.id,
+        ).first()
+        if not camp:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+
     sh = SubmitHubCampaign(
         user_id=current_user.id,
         song_id=body.song_id,
@@ -198,6 +207,7 @@ def add_submission(
     db.add(sub)
     db.commit()
     db.refresh(sub)
+    logger.info(f"Added submission to SH campaign {sh_campaign_id}: curator={body.curator_name}")
     return SubmissionResponse.from_orm(sub)
 
 
@@ -249,4 +259,5 @@ def update_submission(
         setattr(sub, field, value)
     db.commit()
     db.refresh(sub)
+    logger.info(f"Updated submission id={submission_id} status={sub.response_status}")
     return SubmissionResponse.from_orm(sub)

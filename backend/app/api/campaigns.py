@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -43,6 +43,12 @@ class CampaignCreate(BaseModel):
     primary_goal: Literal["awareness", "growth", "monetization"] | None = None
     notes: str | None = None
     song_ids: list[int] = []
+
+    @model_validator(mode="after")
+    def end_after_start(self) -> "CampaignCreate":
+        if self.end_date <= self.start_date:
+            raise ValueError("end_date must be after start_date")
+        return self
 
 
 class CampaignUpdate(BaseModel):
@@ -260,8 +266,8 @@ def add_expense(
     )
     db.add(expense)
 
-    # Update budget_spent on the campaign
-    c.budget_spent = Decimal(str(float(c.budget_spent) + body.amount))
+    # Update budget_spent on the campaign (stay in Decimal arithmetic to avoid float precision loss)
+    c.budget_spent = c.budget_spent + Decimal(str(body.amount))
     db.commit()
     db.refresh(expense)
     logger.info(f"Expense ${body.amount} added to campaign_id={campaign_id}")

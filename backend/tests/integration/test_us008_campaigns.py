@@ -317,12 +317,13 @@ def test_expense_updates_budget_spent(client, auth_headers):
     cid = create.json()["id"]
 
     for amount in (36.0, 25.0, 50.0):
-        client.post(
+        r = client.post(
             f"/api/v1/campaigns/{cid}/expenses",
             json={"expense_date": "2026-03-05", "amount": amount,
                   "category": "social_ads"},
             headers=auth_headers,
         )
+        assert r.status_code == 201, r.text
 
     campaign = client.get(f"/api/v1/campaigns/{cid}", headers=auth_headers).json()
     assert campaign["budget_spent"] == 111.0
@@ -377,3 +378,53 @@ def test_expense_requires_auth(client):
                     json={"expense_date": "2026-03-05", "amount": 10.0,
                           "category": "content"})
     assert r.status_code == 401
+
+
+def test_create_campaign_end_date_not_after_start(client, auth_headers):
+    """end_date on or before start_date → 422 validation error."""
+    r = client.post(
+        "/api/v1/campaigns",
+        json={"name": "Bad Dates", "release_type": "single",
+              "start_date": "2026-04-01", "end_date": "2026-03-01",
+              "budget_total": 100.0},
+        headers=auth_headers,
+    )
+    assert r.status_code == 422
+
+    # Same day also invalid
+    r2 = client.post(
+        "/api/v1/campaigns",
+        json={"name": "Same Day", "release_type": "single",
+              "start_date": "2026-03-01", "end_date": "2026-03-01",
+              "budget_total": 100.0},
+        headers=auth_headers,
+    )
+    assert r2.status_code == 422
+
+
+def test_budget_recommendation_fallback_on_claude_error(client, auth_headers):
+    """When Claude raises an exception, the scaled fallback is returned (still 200)."""
+    create = client.post(
+        "/api/v1/campaigns",
+        json={"name": "Fallback Test", "release_type": "single",
+              "start_date": "2026-03-01", "end_date": "2026-04-01",
+              "budget_total": 200.0},
+        headers=auth_headers,
+    )
+    cid = create.json()["id"]
+
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = Exception("API unavailable")
+    mock_cls = MagicMock(return_value=mock_client)
+
+    with patch("app.services.budget_recommender.anthropic", mock_cls) as patched:
+        patched.Anthropic.return_value = mock_client
+        r = client.post(f"/api/v1/campaigns/{cid}/budget-recommendation",
+                        headers=auth_headers)
+
+    assert r.status_code == 200, r.text
+    data = r.json()
+    # Fallback uses fixed percentages: playlist_pitching=60%, total=$200
+    assert data["playlist_pitching"]["amount"] == 120.0
+    assert data["playlist_pitching"]["pct"] == 60
+    assert "top_tip" in data

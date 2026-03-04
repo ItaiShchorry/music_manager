@@ -119,7 +119,7 @@ def list_content(
 
     items = (
         db.query(GeneratedContent)
-        .filter(GeneratedContent.song_id == song_id)
+        .filter(GeneratedContent.song_id == song_id, GeneratedContent.user_id == current_user.id)
         .order_by(GeneratedContent.created_at.desc())
         .all()
     )

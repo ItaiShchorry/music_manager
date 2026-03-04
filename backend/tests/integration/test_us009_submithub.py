@@ -262,3 +262,17 @@ def test_submithub_submission_requires_auth(client):
     r = client.post("/api/v1/submithub-campaigns/1/submissions",
                     json={"curator_name": "X"})
     assert r.status_code == 401
+
+
+def test_create_sh_campaign_with_unowned_campaign_id(client, db, sample_user, auth_headers):
+    """Linking to a campaign that doesn't belong to the user → 404."""
+    song = _song(db, sample_user)
+
+    # campaign_id=99999 doesn't exist / isn't owned by this user
+    r = client.post(
+        "/api/v1/submithub-campaigns",
+        json={"song_id": song.id, "campaign_id": 99999},
+        headers=auth_headers,
+    )
+    assert r.status_code == 404
+    assert "Campaign not found" in r.json()["detail"]
