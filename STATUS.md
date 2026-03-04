@@ -1,20 +1,20 @@
 # Project Status - Music Promotion Tool
 
-**Last Updated:** 2026-03-04
+**Last Updated:** 2026-03-05
 
-**Current Phase:** Week 4 Complete — Component 6 (Hebrew Social Content Generation) end-to-end
+**Current Phase:** Week 6 Complete — Component 5 (Dashboard + Insights Engine) end-to-end
 
-**Active Branch:** `week4`
+**Active Branch:** `week3`
 
 ---
 
 ## Quick Stats
 
-- **Total Components:** 6 planned, 2 fully implemented (Component 1 + Component 2 + Component 6 backend/frontend)
-- **Backend Endpoints:** 18 implemented (3 auth + 6 songs + 1 playlists + 1 radio-stations + 3 pitches + 1 match + 2 content + health)
-- **Frontend Pages:** 5 (Login, Songs list, Add Song, Song detail/edit, Discover) + ContentPanel on SongDetailPage
-- **Database Tables (ORM):** 6 defined (`users`, `songs`, `playlists`, `radio_stations`, `pitch_submissions`, `generated_content`)
-- **Tests Written:** 85 passing, 0 failing
+- **Total Components:** 6 planned, all 6 implemented (Components 1–6)
+- **Backend Endpoints:** 30+ implemented
+- **Frontend Pages:** 7 (Login, Dashboard, Songs list, Add Song, Song detail/edit, Discover, Campaigns, Campaign detail)
+- **Database Tables (ORM):** 10 defined (`users`, `songs`, `playlists`, `radio_stations`, `pitch_submissions`, `generated_content`, `campaigns`, `campaign_songs`, `expenses`, `submithub_campaigns`, `submithub_submissions`, `dashboard_snapshots`, `insights`)
+- **Tests Written:** 142 passing, 0 failing
 - **Seed Data:** 25 Israeli playlists + 6 radio stations
 - **Deployment Status:** Not deployed
 
@@ -176,22 +176,27 @@ music_manager/
 - Results displayed as cards with Hebrew (RTL) + English captions, hashtag chips, Copy button per caption
 - Previous generations shown when no new generation in the current session
 
+### ✅ Completed (Week 5–6)
+
+**US-008–010: Campaign & Budget Management** — 18 tests
+- Campaign CRUD, expense tracking, Claude AI budget recommendations (`POST /campaigns/{id}/budget-recommendation`)
+- Frontend: CampaignsPage, CampaignDetailPage with budget bars, AI recommendation card, expense form
+
+**US-009: SubmitHub Integration** — 12 tests
+- SubmitHub campaign planning + submission tracking (curator responses, playlist adds)
+- `POST /submithub-campaigns`, submissions CRUD
+
+**US-011–013: Dashboard + Insights Engine** — 21 tests
+- `POST /dashboard/snapshots` — manual Spotify data sync (upsert per day), auto-calculates save_rate + follower_conversion + health_score (0-100)
+- `GET /dashboard/health-score` — returns score + label (Excellent/Healthy/Needs Work/Critical) + all metrics
+- `POST /dashboard/insights/generate` — AI (Claude) generates insight cards (momentum/warning/opportunity/tip)
+- `GET /dashboard/insights` — lists active insights sorted by priority
+- `PATCH /dashboard/insights/{id}` — dismiss or mark as actioned
+- Frontend: DashboardPage with health score widget, metrics grid, insights panel, sync modal, active campaigns
+
 ### ⏳ Not Started
 
-**Week 5 — Component 3: SubmitHub Integration**
-- SubmitHub campaign + submission models
-- Budget allocation per submission
-- `POST /api/v1/songs/{id}/submithub-submit`
-
-**Week 6 — Component 4: Campaign & Budget Management**
-- Campaign model, expense tracking
-- `POST /api/v1/campaigns/{id}/budget-recommendation` — Claude generates budget split
-- Budget pacing alerts
-
-**Week 7 — Component 5: Dashboard + Insights Engine**
-- Dashboard snapshot model
-- Health score calculation (streams 30% + save_rate 25% + follower_conv 20% + playlists 15% + ROI 10%)
-- `GET /api/v1/dashboard/health-score`
+Nothing from the original 6 components remains unimplemented. All user stories US-001 through US-013 are complete.
 
 ---
 
@@ -205,10 +210,14 @@ music_manager/
 - `pitch_submissions` — id, song_id (FK), target_type, playlist_id (FK nullable), radio_station_id (FK nullable), pitched_date, pitch_method, status, response_date, response_notes, created_at
 - `generated_content` — id, user_id (FK), song_id (FK), post_type, platform, tone, caption_hebrew (Text), caption_english (Text), hashtags (JSON), character_count, created_at
 
-### Pending (defined in TECH_SPEC.md, not implemented)
-- `campaigns`, `campaign_songs`, `budget_recommendations`, `expenses`, `campaign_performance`
-- `submithub_campaigns`, `submithub_submissions`
-- `dashboard_snapshots`, `insights`, `post_opportunities`
+### Added in Week 5–6
+- `campaigns` — name, release_type, start/end date, budget_total/spent, primary_goal, status, budget_recommendation (JSON), notes, user_id FK
+- `campaign_songs` — many-to-many association table (campaign_id, song_id)
+- `expenses` — campaign_id FK, user_id FK, expense_date, amount, category, subcategory, description
+- `submithub_campaigns` — song_id/campaign_id FKs, campaign_code (unique), budget_allocated, curator_count, status
+- `submithub_submissions` — submithub_campaign_id FK, curator_name, cost, response_status, playlist_added
+- `dashboard_snapshots` — user_id FK, snapshot_date (unique per user per day), raw metrics, calculated save_rate + follower_conversion_rate + health_score
+- `insights` — user_id FK, insight_type, priority, title, description, action_text, status (active/dismissed/actioned)
 
 ---
 
@@ -254,8 +263,9 @@ music_manager/
 | `/songs/new` | SongNewPage | ✅ |
 | `/songs/:id` | SongDetailPage | ✅ |
 | `/discover` | DiscoverPage | ✅ Week 3 |
-| `/campaigns` | — | ⏳ Week 5–6 |
-| `/dashboard` | — | ⏳ Week 7 |
+| `/campaigns` | CampaignsPage | ✅ Week 5 |
+| `/campaigns/:id` | CampaignDetailPage | ✅ Week 5 |
+| `/dashboard` | DashboardPage | ✅ Week 6 |
 
 > **Note:** No registration page exists in the UI. Use Swagger at `localhost:8000/docs` → `POST /api/v1/auth/register`. One-time setup.
 

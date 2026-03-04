@@ -18,6 +18,9 @@ import app.models.playlist  # noqa: F401
 import app.models.radio_station  # noqa: F401
 import app.models.pitch_submission  # noqa: F401
 import app.models.generated_content  # noqa: F401
+import app.models.campaign  # noqa: F401
+import app.models.submithub  # noqa: F401
+import app.models.dashboard  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

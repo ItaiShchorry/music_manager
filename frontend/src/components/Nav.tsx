@@ -11,8 +11,10 @@ export function Nav() {
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4">
       <span className="text-sm font-semibold text-gray-900 mr-4">Music Manager</span>
+      <NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink>
       <NavLink to="/songs" className={linkClass}>Songs</NavLink>
       <NavLink to="/discover" className={linkClass}>Discover</NavLink>
+      <NavLink to="/campaigns" className={linkClass}>Campaigns</NavLink>
     </nav>
   )
 }

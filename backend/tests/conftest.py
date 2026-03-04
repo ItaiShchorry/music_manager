@@ -15,6 +15,9 @@ from app.database import Base, get_db
 from app.models.playlist import Playlist
 from app.models.pitch_submission import PitchSubmission  # noqa: F401 — registers table
 from app.models.generated_content import GeneratedContent  # noqa: F401 — registers table
+from app.models.campaign import Campaign, Expense  # noqa: F401 — registers tables
+from app.models.submithub import SubmitHubCampaign, SubmitHubSubmission  # noqa: F401 — registers tables
+from app.models.dashboard import DashboardSnapshot, Insight  # noqa: F401 — registers tables
 from app.models.radio_station import RadioStation
 from app.models.song import Song
 from app.models.user import User
