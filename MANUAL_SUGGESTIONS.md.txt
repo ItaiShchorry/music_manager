@@ -1,0 +1,4 @@
+1. pre-fill in some details alone for each song
+1.b. perhaps based on lyrics (also probably enter them somewhere? might be useful as vector store or something)
+2. suggest genres from a bucketlist of known ones
+3. suggest mood tags from known ones + frequently used ones
