@@ -9,6 +9,27 @@ const METHOD_LABELS: Record<string, string> = {
   submithub: 'SubmitHub',
 }
 
+function getPitchUrl(playlist: Playlist): string | null {
+  const method = playlist.submission_method
+  const contact = playlist.curator_contact?.trim() ?? ''
+
+  if (method === 'email' && contact) {
+    const subject = encodeURIComponent(`Music Submission: ${playlist.name}`)
+    return `mailto:${contact}?subject=${subject}`
+  }
+  if (method === 'spotify_for_artists') {
+    return 'https://artists.spotify.com/'
+  }
+  if (method === 'instagram_dm' && contact) {
+    const handle = contact.replace(/^@/, '')
+    return `https://instagram.com/${handle}`
+  }
+  if (method === 'submithub') {
+    return 'https://www.submithub.com'
+  }
+  return null
+}
+
 interface Props {
   playlist: Playlist
   score: number
@@ -89,14 +110,29 @@ export function PlaylistCard({ playlist, score, reasons, songId, onPitched }: Pr
           ) : (
             <span className="text-xs text-gray-400 italic">No direct pitch</span>
           )}
-          {playlist.submission_method && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Mark Pitched
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {(() => {
+              const url = getPitchUrl(playlist)
+              return url ? (
+                <a
+                  href={url}
+                  target={playlist.submission_method === 'email' ? undefined : '_blank'}
+                  rel="noreferrer"
+                  className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors font-medium"
+                >
+                  Pitch →
+                </a>
+              ) : null
+            })()}
+            {playlist.submission_method && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Mark Pitched
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -19,3 +19,6 @@ class User(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
+    snapshots = relationship("DashboardSnapshot", back_populates="user", cascade="all, delete-orphan")
+    insights = relationship("Insight", back_populates="user", cascade="all, delete-orphan")

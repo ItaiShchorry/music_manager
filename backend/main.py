@@ -50,13 +50,17 @@ app.add_middleware(
 )
 
 # Routers
-from app.api import auth, pitches, playlists, radio_stations, songs  # noqa: E402
+from app.api import auth, campaigns, content, dashboard, pitches, playlists, radio_stations, songs, submithub  # noqa: E402
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(songs.router, prefix="/api/v1")
 app.include_router(playlists.router, prefix="/api/v1")
 app.include_router(radio_stations.router, prefix="/api/v1")
 app.include_router(pitches.router, prefix="/api/v1")
+app.include_router(content.router, prefix="/api/v1")
+app.include_router(campaigns.router, prefix="/api/v1")
+app.include_router(submithub.router, prefix="/api/v1")
+app.include_router(dashboard.router, prefix="/api/v1")
 
 
 @app.get("/health")

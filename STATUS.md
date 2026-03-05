@@ -1,8 +1,8 @@
 # Project Status - Music Promotion Tool
 
-**Last Updated:** 2026-03-03
+**Last Updated:** 2026-03-05
 
-**Current Phase:** Week 3 Complete — Component 2 (Israeli Playlist & Radio Discovery) end-to-end
+**Current Phase:** Week 6 Complete — Component 5 (Dashboard + Insights Engine) end-to-end
 
 **Active Branch:** `week3`
 
@@ -10,11 +10,11 @@
 
 ## Quick Stats
 
-- **Total Components:** 6 planned, 1.5 fully implemented (Component 1 + Component 2 backend/frontend)
-- **Backend Endpoints:** 16 implemented (3 auth + 6 songs + 1 playlists + 1 radio-stations + 3 pitches + 1 match + health)
-- **Frontend Pages:** 5 (Login, Songs list, Add Song, Song detail/edit, Discover)
-- **Database Tables (ORM):** 5 defined (`users`, `songs`, `playlists`, `radio_stations`, `pitch_submissions`)
-- **Tests Written:** 64 passing, 0 failing
+- **Total Components:** 6 planned, all 6 implemented (Components 1–6)
+- **Backend Endpoints:** 30+ implemented
+- **Frontend Pages:** 7 (Login, Dashboard, Songs list, Add Song, Song detail/edit, Discover, Campaigns, Campaign detail)
+- **Database Tables (ORM):** 10 defined (`users`, `songs`, `playlists`, `radio_stations`, `pitch_submissions`, `generated_content`, `campaigns`, `campaign_songs`, `expenses`, `submithub_campaigns`, `submithub_submissions`, `dashboard_snapshots`, `insights`)
+- **Tests Written:** 142 passing, 0 failing
 - **Seed Data:** 25 Israeli playlists + 6 radio stations
 - **Deployment Status:** Not deployed
 
@@ -36,8 +36,8 @@ music_manager/
 │   ├── alembic.ini           ✅ Configured (DB URL via env.py)
 │   ├── .env.example          ✅ All required env vars documented
 │   ├── alembic/
-│   │   ├── env.py            ✅ Wired to all 5 models
-│   │   └── versions/         ⏳ No migrations run yet (SQLite locally)
+│   │   ├── env.py            ✅ Wired to all 6 models
+│   │   └── versions/         ✅ 0001_week3_schema.py, 0002_generated_content.py
 │   ├── app/
 │   │   ├── config.py         ✅ pydantic-settings, reads .env
 │   │   ├── database.py       ✅ SQLAlchemy engine + get_db
@@ -46,17 +46,20 @@ music_manager/
 │   │   │   ├── songs.py      ✅ Full CRUD + PATCH + GET /{id}/matches
 │   │   │   ├── playlists.py  ✅ GET /playlists (language + genre filter)
 │   │   │   ├── radio_stations.py ✅ GET /radio-stations
-│   │   │   └── pitches.py    ✅ POST + GET /songs/{id}/pitches + PATCH
+│   │   │   ├── pitches.py    ✅ POST + GET /songs/{id}/pitches + PATCH
+│   │   │   └── content.py    ✅ POST + GET /songs/{id}/content (Week 4)
 │   │   ├── models/
 │   │   │   ├── user.py       ✅
 │   │   │   ├── song.py       ✅ + genre, language fields (Week 3)
 │   │   │   ├── playlist.py   ✅ Week 3
 │   │   │   ├── radio_station.py ✅ Week 3
-│   │   │   └── pitch_submission.py ✅ Week 3
+│   │   │   ├── pitch_submission.py ✅ Week 3
+│   │   │   └── generated_content.py ✅ Week 4
 │   │   ├── services/
 │   │   │   ├── spotify.py    ✅ parse_spotify_track_id() + SpotifyService
 │   │   │   ├── seed.py       ✅ seed_playlists() + seed_radio_stations()
-│   │   │   └── playlist_matcher.py ✅ score_playlist() + score_radio_station()
+│   │   │   ├── playlist_matcher.py ✅ score_playlist() + score_radio_station()
+│   │   │   └── content_generator.py ✅ HebrewContentGenerator (Week 4)
 │   │   └── utils/
 │   │       ├── auth.py       ✅ JWT + bcrypt (no passlib)
 │   │       └── logging_config.py ✅ Rotating file + console handler
@@ -70,7 +73,8 @@ music_manager/
 │       │   ├── test_us003b_song_genre_language.py ✅ 10 tests (Week 3)
 │       │   ├── test_us004_playlist_match.py    ✅ 5 tests (Week 3)
 │       │   ├── test_us005_playlists.py         ✅ 6 tests (Week 3)
-│       │   └── test_us006_pitches.py           ✅ 7 tests (Week 3)
+│       │   ├── test_us006_pitches.py           ✅ 7 tests (Week 3)
+│       │   └── test_us007_content_generation.py ✅ 13 tests (Week 4)
 │       └── unit/
 │           └── test_us002_spotify_url_parsing.py ✅ 9 tests
 └── frontend/
@@ -84,13 +88,14 @@ music_manager/
         ├── App.tsx           ✅ + /discover route (Week 3)
         ├── index.css         ✅ Tailwind directives
         ├── vite-env.d.ts     ✅
-        ├── types/index.ts    ✅ + Playlist, RadioStation, MatchResponse, PitchSubmission
+        ├── types/index.ts    ✅ + Playlist, RadioStation, MatchResponse, PitchSubmission, GeneratedContent
         ├── api/
         │   ├── client.ts     ✅ Axios + JWT interceptor + 401 redirect
         │   ├── auth.ts       ✅ login(), getMe()
         │   ├── songs.ts      ✅ + genre/language in updateSong patch type
         │   ├── playlists.ts  ✅ listPlaylists(), getMatchesForSong() (Week 3)
-        │   └── pitches.ts    ✅ createPitch(), getPitchesForSong(), updatePitch() (Week 3)
+        │   ├── pitches.ts    ✅ createPitch(), getPitchesForSong(), updatePitch() (Week 3)
+        │   └── content.ts    ✅ generateContent(), getGeneratedContent() (Week 4)
         ├── hooks/
         │   └── useAuth.ts    ✅ Token lifecycle, user state, login/logout
         ├── components/
@@ -98,14 +103,16 @@ music_manager/
         │   ├── Nav.tsx                 ✅ Songs | Discover nav bar (Week 3)
         │   ├── songs/
         │   │   └── SongCard.tsx        ✅
-        │   └── discover/
-        │       ├── PlaylistCard.tsx    ✅ Score badge + Mark Pitched modal (Week 3)
-        │       └── RadioStationCard.tsx ✅ Recommended badge + pitch modal (Week 3)
+        │   ├── discover/
+        │   │   ├── PlaylistCard.tsx    ✅ Score badge + Mark Pitched modal (Week 3)
+        │   │   └── RadioStationCard.tsx ✅ Recommended badge + pitch modal (Week 3)
+        │   └── content/
+        │       └── ContentPanel.tsx    ✅ Content generator UI (Week 4)
         └── pages/
             ├── LoginPage.tsx           ✅
             ├── SongsPage.tsx           ✅ + Nav bar
             ├── SongNewPage.tsx         ✅
-            ├── SongDetailPage.tsx      ✅ + genre/language fields + pitch history table
+            ├── SongDetailPage.tsx      ✅ + genre/language + pitch history + ContentPanel
             └── DiscoverPage.tsx        ✅ Song selector → ranked playlists + radio (Week 3)
 ```
 
@@ -156,27 +163,40 @@ music_manager/
 - `RadioStationCard` — "Recommended"/"Secondary" badge, genre chips, "Mark Pitched" modal
 - `npm run build` passes with zero TypeScript errors
 
+**US-007: Hebrew Content Generation** — 13 tests
+- `POST /songs/{id}/content` — calls Claude `claude-sonnet-4-20250514`, generates captions per tone + platform
+- `GET /songs/{id}/content` — lists previously generated content, ordered by created_at desc
+- `HebrewContentGenerator` service: 1 Claude call per tone, cross each platform → `(tones × platforms)` items
+- Platform character trimming: Instagram max 150 chars, Facebook max 80, TikTok max 100
+- All Anthropic calls mocked in tests — no real API calls
+- `generated_content` table persists every generation
+
+**Frontend — Component 6 UI**
+- `ContentPanel.tsx` — embedded in SongDetailPage; post-type radio, key_message/context inputs, tone checkboxes, platform checkboxes, Generate button
+- Results displayed as cards with Hebrew (RTL) + English captions, hashtag chips, Copy button per caption
+- Previous generations shown when no new generation in the current session
+
+### ✅ Completed (Week 5–6)
+
+**US-008–010: Campaign & Budget Management** — 18 tests
+- Campaign CRUD, expense tracking, Claude AI budget recommendations (`POST /campaigns/{id}/budget-recommendation`)
+- Frontend: CampaignsPage, CampaignDetailPage with budget bars, AI recommendation card, expense form
+
+**US-009: SubmitHub Integration** — 12 tests
+- SubmitHub campaign planning + submission tracking (curator responses, playlist adds)
+- `POST /submithub-campaigns`, submissions CRUD
+
+**US-011–013: Dashboard + Insights Engine** — 21 tests
+- `POST /dashboard/snapshots` — manual Spotify data sync (upsert per day), auto-calculates save_rate + follower_conversion + health_score (0-100)
+- `GET /dashboard/health-score` — returns score + label (Excellent/Healthy/Needs Work/Critical) + all metrics
+- `POST /dashboard/insights/generate` — AI (Claude) generates insight cards (momentum/warning/opportunity/tip)
+- `GET /dashboard/insights` — lists active insights sorted by priority
+- `PATCH /dashboard/insights/{id}` — dismiss or mark as actioned
+- Frontend: DashboardPage with health score widget, metrics grid, insights panel, sync modal, active campaigns
+
 ### ⏳ Not Started
 
-**Week 4 — Component 6: Hebrew Content Generation**
-- `POST /api/v1/songs/{id}/content` — Claude generates Instagram/Facebook/TikTok captions in Hebrew
-- 3 tone variants per platform; character limit enforcement; Hebrew + English hashtag mix
-- Frontend: content generation panel on SongDetailPage
-
-**Week 5 — Component 3: SubmitHub Integration**
-- SubmitHub campaign + submission models
-- Budget allocation per submission
-- `POST /api/v1/songs/{id}/submithub-submit`
-
-**Week 6 — Component 4: Campaign & Budget Management**
-- Campaign model, expense tracking
-- `POST /api/v1/campaigns/{id}/budget-recommendation` — Claude generates budget split
-- Budget pacing alerts
-
-**Week 7 — Component 5: Dashboard + Insights Engine**
-- Dashboard snapshot model
-- Health score calculation (streams 30% + save_rate 25% + follower_conv 20% + playlists 15% + ROI 10%)
-- `GET /api/v1/dashboard/health-score`
+Nothing from the original 6 components remains unimplemented. All user stories US-001 through US-013 are complete.
 
 ---
 
@@ -188,11 +208,16 @@ music_manager/
 - `playlists` — id, name, spotify_id, curator_name, curator_contact, follower_count, genres (JSON), languages (JSON), mood_tags (JSON), submission_method, submission_guidelines, is_active, notes, created_at
 - `radio_stations` — id, name, name_hebrew, station_type, contact_email, contact_phone, website, genres_focus (JSON), best_for (JSON), submission_guidelines, response_time, reach_description, notes, created_at
 - `pitch_submissions` — id, song_id (FK), target_type, playlist_id (FK nullable), radio_station_id (FK nullable), pitched_date, pitch_method, status, response_date, response_notes, created_at
+- `generated_content` — id, user_id (FK), song_id (FK), post_type, platform, tone, caption_hebrew (Text), caption_english (Text), hashtags (JSON), character_count, created_at
 
-### Pending (defined in TECH_SPEC.md, not implemented)
-- `campaigns`, `campaign_songs`, `budget_recommendations`, `expenses`, `campaign_performance`
-- `submithub_campaigns`, `submithub_submissions`
-- `dashboard_snapshots`, `insights`, `post_opportunities`
+### Added in Week 5–6
+- `campaigns` — name, release_type, start/end date, budget_total/spent, primary_goal, status, budget_recommendation (JSON), notes, user_id FK
+- `campaign_songs` — many-to-many association table (campaign_id, song_id)
+- `expenses` — campaign_id FK, user_id FK, expense_date, amount, category, subcategory, description
+- `submithub_campaigns` — song_id/campaign_id FKs, campaign_code (unique), budget_allocated, curator_count, status
+- `submithub_submissions` — submithub_campaign_id FK, curator_name, cost, response_status, playlist_added
+- `dashboard_snapshots` — user_id FK, snapshot_date (unique per user per day), raw metrics, calculated save_rate + follower_conversion_rate + health_score
+- `insights` — user_id FK, insight_type, priority, title, description, action_text, status (active/dismissed/actioned)
 
 ---
 
@@ -211,6 +236,8 @@ music_manager/
 - ✅ `DELETE /{id}` — delete
 - ✅ `GET /{id}/matches` — ranked playlist + radio station matches
 - ✅ `GET /{id}/pitches` — pitch history for song
+- ✅ `POST /{id}/content` — generate Hebrew social content (Claude)
+- ✅ `GET /{id}/content` — list previously generated content
 
 ### Playlists (`/api/v1/playlists`)
 - ✅ `GET /` — list all active, optional `?language=` and `?genre=` filters
@@ -236,8 +263,9 @@ music_manager/
 | `/songs/new` | SongNewPage | ✅ |
 | `/songs/:id` | SongDetailPage | ✅ |
 | `/discover` | DiscoverPage | ✅ Week 3 |
-| `/campaigns` | — | ⏳ Week 5–6 |
-| `/dashboard` | — | ⏳ Week 7 |
+| `/campaigns` | CampaignsPage | ✅ Week 5 |
+| `/campaigns/:id` | CampaignDetailPage | ✅ Week 5 |
+| `/dashboard` | DashboardPage | ✅ Week 6 |
 
 > **Note:** No registration page exists in the UI. Use Swagger at `localhost:8000/docs` → `POST /api/v1/auth/register`. One-time setup.
 
@@ -249,11 +277,12 @@ music_manager/
 
 **Backend** (from `backend/`):
 ```powershell
-# One-time: create the SQLite database (includes all 5 tables + seed data)
+# One-time: create the SQLite database (includes all 6 tables + seed data)
 ..\.venv\Scripts\python -c "
 from app.database import engine, Base
 import app.models.user, app.models.song
 import app.models.playlist, app.models.radio_station, app.models.pitch_submission
+import app.models.generated_content
 Base.metadata.create_all(engine)
 from app.database import SessionLocal
 from app.services.seed import seed_playlists, seed_radio_stations
@@ -281,6 +310,7 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 SPOTIFY_CLIENT_ID=<from Spotify Developer Dashboard>
 SPOTIFY_CLIENT_SECRET=<from Spotify Developer Dashboard>
+ANTHROPIC_API_KEY=<from Anthropic Console — required for content generation>
 ENVIRONMENT=development
 LOG_LEVEL=INFO
 ```
@@ -288,7 +318,7 @@ LOG_LEVEL=INFO
 ### Running tests
 ```powershell
 # from backend/
-..\.venv\Scripts\python -m pytest tests/ -v         # all 64 tests
+..\.venv\Scripts\python -m pytest tests/ -v         # all 85 tests
 ..\.venv\Scripts\python -m pytest tests/ -k "us004" # one user story
 ```
 
@@ -352,6 +382,8 @@ LOG_LEVEL=INFO
 - **Spotify auth:** Client Credentials flow (server-to-server) — no user OAuth needed
 - **Match scoring:** genre word-overlap (not exact match) so "mainstream Hebrew pop" matches "hebrew pop" playlists
 - **Radio scoring:** genre-overlap count only (2+ → Recommended, 1 → Secondary) — simpler than playlist scoring, appropriate for a small fixed list
+- **Claude integration:** Anthropic SDK sync client (`anthropic.Anthropic()`); 1 call per tone, cross platforms in Python — minimises API calls while keeping response parsing simple
+- **Content mock pattern:** `patch("app.services.content_generator.anthropic", mock_cls)` + `patched.Anthropic.return_value = mock_client` — patches the module-level import so tests never touch the real API
 
 ---
 
@@ -369,19 +401,34 @@ LOG_LEVEL=INFO
 - The Discover page warns (amber text) when the selected song has no profile fields, with a direct link to the Song Detail page — better UX than silently returning all-zero scores
 - `PitchRow` inline status dropdown: color-coded via a static map, no extra library needed
 
-**Things to watch for in Week 4**
-- Hebrew content generation (Component 6) will require mocking the Anthropic client in all tests — make sure the mock returns the right `content[0].text` structure
-- The `claude-sonnet-4-20250514` model ID from CLAUDE.md should be used, not the generic alias
+---
+
+## Observations & Lessons (Week 4)
+
+**What worked well**
+- Mocking the Anthropic client was clean: patch the `anthropic` module imported at the top of `content_generator.py`, then set `patched.Anthropic.return_value = mock_client` — all 13 tests green with zero real API calls
+- `HebrewContentGenerator` service instantiates the client internally (`self.client = client or anthropic.Anthropic()`) — easy to override in tests without dependency injection framework
+- JSON fallback parsing (`re.search(r"\{.*\}", text, re.DOTALL)`) protects against Claude wrapping the response in markdown fences
+- ContentPanel embedded in SongDetailPage (not a separate route) keeps the UX tight — generation is contextual to the song, not a standalone page
+
+**Decisions made during implementation**
+- 1 Claude call per tone × N platforms (not 1 call per tone-platform pair) — avoids unnecessary API calls; platform variation is applied in Python via character trimming
+- `character_count` stored as `len(caption_hebrew)` — gives the user a quick check that the Hebrew caption fits; English length varies by platform too but Hebrew is the primary language
+- `ContentPanel` shows previous generations only when there's no current session result — avoids cluttering the UI with stale content once the user generates new variants
 
 ---
 
-## Next Steps (Week 4)
+## Next Steps (Week 5)
 
-1. **Component 6 — Hebrew Content Generation**
-   - `POST /api/v1/songs/{id}/content` — Claude Sonnet 4 generates captions
-   - 3 tone variants per platform (Instagram, Facebook, TikTok)
-   - Character limits: Instagram 125–150, Facebook 40–80, TikTok 50–100
-   - Hebrew + English hashtag mix (3–5 each)
-   - Frontend: content generation panel on SongDetailPage or new tab
+1. **Component 3 — SubmitHub Integration**
+   - SubmitHub campaign model + submission tracking
+   - Budget allocation per submission
+   - `POST /api/v1/songs/{id}/submithub-submit`
 
-2. **Seed data wiring** — call `seed_playlists` + `seed_radio_stations` from app lifespan in `main.py` so a freshly initialised DB auto-populates
+2. **Component 4 — Campaign & Budget Management**
+   - Campaign model, expense tracking
+   - Claude-generated budget recommendations
+
+3. **Component 5 — Dashboard + Insights Engine**
+   - Health score calculation
+   - `GET /api/v1/dashboard/health-score`
