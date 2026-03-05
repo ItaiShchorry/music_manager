@@ -10,7 +10,13 @@ import {
   type SnapshotCreate,
 } from '../api/dashboard'
 import { listCampaigns } from '../api/campaigns'
+import {
+  generateOpportunities,
+  listOpportunities,
+  updateOpportunity,
+} from '../api/opportunities'
 import { Nav } from '../components/Nav'
+import { OpportunityCard } from '../components/opportunities/OpportunityCard'
 import type { Insight } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -231,6 +237,22 @@ export function DashboardPage() {
     queryFn: listCampaigns,
   })
 
+  const { data: opportunities = [] } = useQuery({
+    queryKey: ['opportunities'],
+    queryFn: listOpportunities,
+  })
+
+  const genOpportunitiesMutation = useMutation({
+    mutationFn: () => generateOpportunities(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['opportunities'] }),
+  })
+
+  const updateOpportunityMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'used' | 'dismissed' | 'remind_later' }) =>
+      updateOpportunity(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['opportunities'] }),
+  })
+
   const genMutation = useMutation({
     mutationFn: generateInsights,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['insights'] }),
@@ -428,6 +450,50 @@ export function DashboardPage() {
             <div className="space-y-3">
               {insights.map((insight) => (
                 <InsightCard key={insight.id} insight={insight} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Post Opportunities */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700">
+                Post Ideas{' '}
+                {opportunities.length > 0 && (
+                  <span className="ml-1 text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">
+                    {opportunities.length}
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Timely angles and hooks for your next social post
+              </p>
+            </div>
+            <button
+              onClick={() => genOpportunitiesMutation.mutate()}
+              disabled={genOpportunitiesMutation.isPending}
+              className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {genOpportunitiesMutation.isPending ? 'Generating…' : 'Generate Ideas'}
+            </button>
+          </div>
+
+          {opportunities.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              Click "Generate Ideas" to get 3-5 timely post suggestions based on your milestones, playlist adds, and recent activity.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {opportunities.map((opp) => (
+                <OpportunityCard
+                  key={opp.id}
+                  opportunity={opp}
+                  onUse={(id) => updateOpportunityMutation.mutate({ id, status: 'used' })}
+                  onDismiss={(id) => updateOpportunityMutation.mutate({ id, status: 'dismissed' })}
+                  loading={updateOpportunityMutation.isPending}
+                />
               ))}
             </div>
           )}

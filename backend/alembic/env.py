@@ -21,6 +21,7 @@ import app.models.generated_content  # noqa: F401
 import app.models.campaign  # noqa: F401
 import app.models.submithub  # noqa: F401
 import app.models.dashboard  # noqa: F401
+import app.models.post_opportunity  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

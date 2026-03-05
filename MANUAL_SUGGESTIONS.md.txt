@@ -2,3 +2,5 @@
 1.b. perhaps based on lyrics (also probably enter them somewhere? might be useful as vector store or something)
 2. suggest genres from a bucketlist of known ones
 3. suggest mood tags from known ones + frequently used ones
+4. I upload live video. The platform beautifies it and creates content out of it (?)
+

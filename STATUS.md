@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-03-05
 
-**Current Phase:** Week 6 Complete — Component 5 (Dashboard + Insights Engine) end-to-end
+**Current Phase:** Week 6 Complete — All US-001 through US-015 implemented (full MVP)
 
 **Active Branch:** `week3`
 
@@ -10,11 +10,11 @@
 
 ## Quick Stats
 
-- **Total Components:** 6 planned, all 6 implemented (Components 1–6)
+- **Total Components:** 6 planned (all core implemented; US-014/US-015 in progress)
 - **Backend Endpoints:** 30+ implemented
-- **Frontend Pages:** 7 (Login, Dashboard, Songs list, Add Song, Song detail/edit, Discover, Campaigns, Campaign detail)
-- **Database Tables (ORM):** 10 defined (`users`, `songs`, `playlists`, `radio_stations`, `pitch_submissions`, `generated_content`, `campaigns`, `campaign_songs`, `expenses`, `submithub_campaigns`, `submithub_submissions`, `dashboard_snapshots`, `insights`)
-- **Tests Written:** 142 passing, 0 failing
+- **Frontend Pages:** 8 (Login, Dashboard, Songs list, Add Song, Song detail/edit, Discover, Campaigns, Campaign detail, SubmitHub)
+- **Database Tables (ORM):** 11 defined (`users`, `songs`, `playlists`, `radio_stations`, `pitch_submissions`, `generated_content`, `campaigns`, `campaign_songs`, `expenses`, `submithub_campaigns`, `submithub_submissions`, `dashboard_snapshots`, `insights`, `post_opportunities`)
+- **Tests Written:** 161 passing, 0 failing
 - **Seed Data:** 25 Israeli playlists + 6 radio stations
 - **Deployment Status:** Not deployed
 
@@ -104,7 +104,7 @@ music_manager/
         │   ├── songs/
         │   │   └── SongCard.tsx        ✅
         │   ├── discover/
-        │   │   ├── PlaylistCard.tsx    ✅ Score badge + Mark Pitched modal (Week 3)
+        │   │   ├── PlaylistCard.tsx    ✅ Score badge + Mark Pitched + Pitch → redirect link (Week 6)
         │   │   └── RadioStationCard.tsx ✅ Recommended badge + pitch modal (Week 3)
         │   └── content/
         │       └── ContentPanel.tsx    ✅ Content generator UI (Week 4)
@@ -112,8 +112,9 @@ music_manager/
             ├── LoginPage.tsx           ✅
             ├── SongsPage.tsx           ✅ + Nav bar
             ├── SongNewPage.tsx         ✅
-            ├── SongDetailPage.tsx      ✅ + genre/language + pitch history + ContentPanel
-            └── DiscoverPage.tsx        ✅ Song selector → ranked playlists + radio (Week 3)
+            ├── SongDetailPage.tsx      ✅ + genre/language + pitch history + ContentPanel + SubmitHub entry
+            ├── DiscoverPage.tsx        ✅ Song selector → ranked playlists + radio (Week 3)
+            └── SubmitHubPage.tsx       ✅ Campaign planner + submission tracker (Week 5)
 ```
 
 ---
@@ -194,9 +195,24 @@ music_manager/
 - `PATCH /dashboard/insights/{id}` — dismiss or mark as actioned
 - Frontend: DashboardPage with health score widget, metrics grid, insights panel, sync modal, active campaigns
 
-### ⏳ Not Started
+**US-014: Post Opportunity Suggestions** — 7 tests
+- AI-generated "what to post about" cards surfaced on Dashboard
+- Signal sources: stream milestones, recent playlist adds, inactivity, recent releases, Israeli holidays
+- Backend: `PostOpportunity` model + `OpportunityGenerator` service + `/opportunities` router
+- Frontend: `OpportunityCard` component + Dashboard "Post Ideas" panel
 
-Nothing from the original 6 components remains unimplemented. All user stories US-001 through US-013 are complete.
+**US-015: Opportunity History** — 9 tests
+- PATCH endpoint to mark status: used, dismissed, remind_later
+- used_at timestamp set when status=used
+- Dismissed/used items removed from active feed
+
+### ✅ Week 6 Polish (done)
+
+- `PlaylistCard` "Pitch →" redirect links: email (`mailto:`), Spotify for Artists, Instagram DM, SubmitHub
+- Budget per-channel actual vs. planned tracking in CampaignDetailPage
+- Song creation helpers: genre chips, mood tag chips, story starters
+- Dashboard: renamed "Sync Spotify" → "Update Stats", added Activity Overview section, health score date
+- SubmitHub frontend: full campaign planner + per-curator submission tracker at `/songs/:id/submithub`
 
 ---
 
@@ -418,17 +434,13 @@ LOG_LEVEL=INFO
 
 ---
 
-## Next Steps (Week 5)
+## Next Steps
 
-1. **Component 3 — SubmitHub Integration**
-   - SubmitHub campaign model + submission tracking
-   - Budget allocation per submission
-   - `POST /api/v1/songs/{id}/submithub-submit`
+All US-001–US-015 are complete. The MVP is feature-complete per the PRD.
 
-2. **Component 4 — Campaign & Budget Management**
-   - Campaign model, expense tracking
-   - Claude-generated budget recommendations
-
-3. **Component 5 — Dashboard + Insights Engine**
-   - Health score calculation
-   - `GET /api/v1/dashboard/health-score`
+Possible Phase 2 items:
+- Spotify for Artists API auto-sync (replace manual entry)
+- AI audio analysis (SONOTELLER) for song profiling
+- Meta/Google Ads API for automated budget execution
+- Israeli current events feed for richer opportunity signals
+- Export features (CSV pitch history, PDF campaigns)

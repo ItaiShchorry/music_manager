@@ -226,6 +226,20 @@ export interface Insight {
   created_at: string
 }
 
+export interface PostOpportunity {
+  id: number
+  song_id: number | null
+  hook: string
+  why_now: string
+  signal_type: string
+  suggested_platform: string | null
+  hashtag_suggestions: string[] | null
+  timing_note: string | null
+  status: 'active' | 'used' | 'dismissed' | 'remind_later'
+  used_at: string | null
+  created_at: string
+}
+
 export interface LoginRequest {
   email: string
   password: string
