@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import {
   addSubmission,
   createSHCampaign,
+  generatePitchBrief,
   listSHCampaignsForSong,
   listSubmissions,
   updateSubmission,
@@ -387,6 +388,13 @@ function SubmissionRow({ sub }: { sub: SubmitHubSubmission }) {
 function CampaignCard({ campaign }: { campaign: SubmitHubCampaign }) {
   const [expanded, setExpanded] = useState(false)
   const [showAddSub, setShowAddSub] = useState(false)
+  const [pitchBrief, setPitchBrief] = useState<{ pitch_text: string; spotify_url: string | null } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const briefMutation = useMutation({
+    mutationFn: () => generatePitchBrief(campaign.id),
+    onSuccess: (data) => setPitchBrief(data),
+  })
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ['sh-submissions', campaign.id],
@@ -516,6 +524,50 @@ function CampaignCard({ campaign }: { campaign: SubmitHubCampaign }) {
               + Add curator submission
             </button>
           )}
+
+          {/* Pitch Brief Generator */}
+          <div className="border-t border-gray-100 pt-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-600">Pitch Brief</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); briefMutation.mutate() }}
+                disabled={briefMutation.isPending}
+                className="text-xs bg-violet-600 text-white px-3 py-1 rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {briefMutation.isPending ? 'Generating…' : pitchBrief ? 'Regenerate' : 'Generate with AI ✨'}
+              </button>
+            </div>
+            {briefMutation.isError && (
+              <p className="text-xs text-red-500">Failed to generate. Please try again.</p>
+            )}
+            {pitchBrief && (
+              <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 space-y-2">
+                <p className="text-sm text-gray-800 leading-relaxed">{pitchBrief.pitch_text}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(pitchBrief.pitch_text)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                    className="text-xs text-violet-700 hover:text-violet-900 font-medium"
+                  >
+                    {copied ? '✓ Copied!' : 'Copy text'}
+                  </button>
+                  {pitchBrief.spotify_url && (
+                    <a
+                      href={pitchBrief.spotify_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-gray-400 hover:text-gray-600 ml-auto"
+                    >
+                      Spotify link ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {campaign.notes && (
             <p className="text-xs text-gray-400 italic border-t border-gray-100 pt-2">{campaign.notes}</p>

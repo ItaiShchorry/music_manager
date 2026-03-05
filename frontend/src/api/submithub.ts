@@ -39,3 +39,12 @@ export const listSubmissions = (shCampaignId: number): Promise<SubmitHubSubmissi
 
 export const updateSubmission = (submissionId: number, patch: SubmissionUpdate): Promise<SubmitHubSubmission> =>
   api.patch(`/submithub-submissions/${submissionId}`, patch).then((r) => r.data)
+
+export interface PitchBrief {
+  pitch_text: string
+  campaign_code: string
+  spotify_url: string | null
+}
+
+export const generatePitchBrief = (shCampaignId: number): Promise<PitchBrief> =>
+  api.post(`/submithub-campaigns/${shCampaignId}/brief`).then((r) => r.data)

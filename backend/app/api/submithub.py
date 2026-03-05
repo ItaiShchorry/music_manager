@@ -1,7 +1,7 @@
 import logging
 from datetime import UTC, date, datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -12,6 +12,7 @@ from app.models.campaign import Campaign
 from app.models.song import Song
 from app.models.submithub import SubmitHubCampaign, SubmitHubSubmission
 from app.models.user import User
+from app.services.pitch_brief_generator import PitchBriefGenerator
 from app.utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,12 @@ class SubmissionCreate(BaseModel):
     curator_approval_rate: float | None = None
     submission_date: date | None = None
     cost: float = 3.0
+
+
+class PitchBriefResponse(BaseModel):
+    pitch_text: str
+    campaign_code: str
+    spotify_url: Optional[str]
 
 
 class SubmissionUpdate(BaseModel):
@@ -261,3 +268,32 @@ def update_submission(
     db.refresh(sub)
     logger.info(f"Updated submission id={submission_id} status={sub.response_status}")
     return SubmissionResponse.from_orm(sub)
+
+
+@router.post("/submithub-campaigns/{sh_campaign_id}/brief", response_model=PitchBriefResponse)
+def generate_pitch_brief(
+    sh_campaign_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Generate a ready-to-copy SubmitHub pitch text using Claude."""
+    sh = db.query(SubmitHubCampaign).filter(
+        SubmitHubCampaign.id == sh_campaign_id,
+        SubmitHubCampaign.user_id == current_user.id,
+    ).first()
+    if not sh:
+        raise HTTPException(status_code=404, detail="SubmitHub campaign not found")
+
+    song = db.query(Song).filter(Song.id == sh.song_id).first()
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+
+    generator = PitchBriefGenerator()
+    pitch_text = generator.generate(song)
+    logger.info(f"Generated pitch brief for SH campaign {sh.campaign_code}")
+
+    return PitchBriefResponse(
+        pitch_text=pitch_text,
+        campaign_code=sh.campaign_code,
+        spotify_url=song.spotify_url,
+    )
