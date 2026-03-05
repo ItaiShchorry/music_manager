@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getPitchesForSong, updatePitch } from '../api/pitches'
-import { getSong, updateSong } from '../api/songs'
+import { getSong, listSongs, updateSong } from '../api/songs'
 import { Nav } from '../components/Nav'
 import { ContentPanel } from '../components/content/ContentPanel'
 import type { PitchSubmission, Song } from '../types'
@@ -240,6 +240,14 @@ export function SongDetailPage() {
     queryFn: () => getPitchesForSong(Number(id)),
   })
 
+  const { data: allSongs = [] } = useQuery({
+    queryKey: ['songs'],
+    queryFn: listSongs,
+  })
+  const previousSong = allSongs
+    .filter((s) => s.id !== Number(id))
+    .sort((a, b) => b.id - a.id)[0] ?? null
+
   const [story, setStory] = useState<string>('')
   const [moodTags, setMoodTags] = useState<string[]>([])
   const [themes, setThemes] = useState<string[]>([])
@@ -273,6 +281,15 @@ export function SongDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['pitches', Number(id)] })
     },
   })
+
+  const copyFromPrevious = () => {
+    if (!previousSong) return
+    setGenre(previousSong.genre ?? '')
+    setLanguage(previousSong.language ?? '')
+    setMoodTags(previousSong.mood_tags ?? [])
+    setThemes(previousSong.themes ?? [])
+    setComparableArtists(previousSong.comparable_artists ?? [])
+  }
 
   const handleSave = () => {
     mutation.mutate({
@@ -358,7 +375,19 @@ export function SongDetailPage() {
 
         {/* Manual fields (editable) */}
         <section className="bg-white rounded-2xl shadow-sm p-6 space-y-5">
-          <h3 className="text-lg font-semibold text-gray-900">Song Profile</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Song Profile</h3>
+            {previousSong && (
+              <button
+                type="button"
+                onClick={copyFromPrevious}
+                className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+                title={`Copy genre, language, mood, themes and comparable artists from "${previousSong.title}"`}
+              >
+                Copy profile from "{previousSong.title}"
+              </button>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

@@ -1,5 +1,5 @@
 import api from './client'
-import type { Campaign, BudgetRecommendation, Expense } from '../types'
+import type { Campaign, BudgetRecommendation, CampaignLearnings, Expense } from '../types'
 
 export interface CampaignCreate {
   name: string
@@ -43,3 +43,6 @@ export const listExpenses = (campaignId: number): Promise<Expense[]> =>
 
 export const addExpense = (campaignId: number, payload: ExpenseCreate): Promise<Expense> =>
   api.post(`/campaigns/${campaignId}/expenses`, payload).then((r) => r.data)
+
+export const applyLearnings = (campaignId: number): Promise<CampaignLearnings> =>
+  api.post(`/campaigns/${campaignId}/apply-learnings`).then((r) => r.data)

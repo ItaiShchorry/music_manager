@@ -12,6 +12,7 @@ from app.models.campaign import Campaign, Expense
 from app.models.song import Song
 from app.models.user import User
 from app.services.budget_recommender import BudgetRecommender
+from app.services.learnings_generator import LearningsGenerator
 from app.utils.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -288,3 +289,26 @@ def list_expenses(
         .all()
     )
     return [ExpenseResponse.from_orm(e) for e in expenses]
+
+
+# ---------------------------------------------------------------------------
+# Apply Learnings
+# ---------------------------------------------------------------------------
+
+@router.post("/campaigns/{campaign_id}/apply-learnings")
+def apply_learnings(
+    campaign_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Analyze channel spend vs plan and return Claude-generated campaign insights."""
+    c = _get_campaign_or_404(campaign_id, current_user, db)
+    expenses = (
+        db.query(Expense)
+        .filter(Expense.campaign_id == campaign_id)
+        .all()
+    )
+    generator = LearningsGenerator()
+    result = generator.generate(c, expenses)
+    logger.info(f"Generated learnings for campaign_id={campaign_id}")
+    return result

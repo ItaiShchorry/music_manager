@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { addExpense, getBudgetRecommendation, getCampaign, listExpenses, updateCampaign } from '../api/campaigns'
+import { addExpense, applyLearnings, getBudgetRecommendation, getCampaign, listExpenses, updateCampaign } from '../api/campaigns'
 import { Nav } from '../components/Nav'
-import type { BudgetRecommendation, Campaign } from '../types'
+import type { BudgetRecommendation, Campaign, CampaignLearnings, ChannelInsight } from '../types'
 import type { ExpenseCreate } from '../api/campaigns'
 
 const EXPENSE_CATEGORIES = [
@@ -204,6 +204,80 @@ function AddExpenseForm({ campaignId, onClose }: { campaignId: number; onClose: 
 }
 
 // ---------------------------------------------------------------------------
+// Learnings card
+// ---------------------------------------------------------------------------
+
+const VERDICT_STYLES: Record<string, string> = {
+  on_track: 'bg-green-100 text-green-800',
+  over_budget: 'bg-red-100 text-red-800',
+  under_budget: 'bg-yellow-100 text-yellow-800',
+  not_used: 'bg-gray-100 text-gray-500',
+  unplanned: 'bg-orange-100 text-orange-800',
+}
+
+const VERDICT_LABELS: Record<string, string> = {
+  on_track: 'On track',
+  over_budget: 'Over budget',
+  under_budget: 'Under budget',
+  not_used: 'Not used',
+  unplanned: 'Unplanned',
+}
+
+const CHANNEL_LABELS: Record<string, string> = {
+  playlist_pitching: 'Playlist Pitching',
+  submithub: 'SubmitHub',
+  social_ads: 'Social Ads',
+  content_creation: 'Content Creation',
+  radio_promotion: 'Radio Promotion',
+  other: 'Other',
+}
+
+function LearningsCard({ learnings }: { learnings: CampaignLearnings }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-700 leading-relaxed">{learnings.summary}</p>
+
+      {learnings.channel_insights.length > 0 && (
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Channel breakdown</h5>
+          {learnings.channel_insights.map((ci: ChannelInsight) => (
+            <div key={ci.channel} className="bg-gray-50 rounded-lg p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-800">
+                  {CHANNEL_LABELS[ci.channel] ?? ci.channel}
+                </span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${VERDICT_STYLES[ci.verdict] ?? 'bg-gray-100 text-gray-600'}`}>
+                  {VERDICT_LABELS[ci.verdict] ?? ci.verdict}
+                </span>
+              </div>
+              <div className="flex gap-4 text-xs text-gray-500">
+                {ci.planned != null && <span>Planned: ${ci.planned.toFixed(0)}</span>}
+                <span>Actual: ${ci.actual.toFixed(0)}</span>
+              </div>
+              <p className="text-xs text-gray-600 italic">{ci.recommendation}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {learnings.next_campaign_suggestions.length > 0 && (
+        <div className="space-y-1">
+          <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Next campaign</h5>
+          <ul className="space-y-1">
+            {learnings.next_campaign_suggestions.map((s, i) => (
+              <li key={i} className="text-sm text-gray-700 flex gap-2">
+                <span className="text-indigo-400 flex-shrink-0">→</span>
+                {s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -213,6 +287,7 @@ export function CampaignDetailPage() {
   const queryClient = useQueryClient()
 
   const [showAddExpense, setShowAddExpense] = useState(false)
+  const [learnings, setLearnings] = useState<CampaignLearnings | null>(null)
 
   const { data: campaign, isLoading } = useQuery<Campaign>({
     queryKey: ['campaign', campaignId],
@@ -233,6 +308,11 @@ export function CampaignDetailPage() {
   const statusMutation = useMutation({
     mutationFn: (status: Campaign['status']) => updateCampaign(campaignId, { status }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] }),
+  })
+
+  const learningsMutation = useMutation({
+    mutationFn: () => applyLearnings(campaignId),
+    onSuccess: (data) => setLearnings(data),
   })
 
   if (isLoading || !campaign) {
@@ -367,6 +447,35 @@ export function CampaignDetailPage() {
                 </tbody>
               </table>
             </div>
+          )}
+        </div>
+
+        {/* Apply Learnings */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700">Apply Learnings</h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Analyze what worked, what didn't, and what to do next time.
+              </p>
+            </div>
+            <button
+              onClick={() => learningsMutation.mutate()}
+              disabled={learningsMutation.isPending}
+              className="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
+            >
+              {learningsMutation.isPending ? 'Analyzing…' : learnings ? 'Re-analyze' : 'Analyze Campaign ✨'}
+            </button>
+          </div>
+          {learningsMutation.isError && (
+            <p className="text-xs text-red-500">Analysis failed. Please try again.</p>
+          )}
+          {learnings ? (
+            <LearningsCard learnings={learnings} />
+          ) : (
+            <p className="text-sm text-gray-400">
+              Click "Analyze Campaign" to get AI-powered insights on your channel spend and recommendations for next time.
+            </p>
           )}
         </div>
       </div>

@@ -240,6 +240,20 @@ export interface PostOpportunity {
   created_at: string
 }
 
+export interface ChannelInsight {
+  channel: string
+  planned: number | null
+  actual: number
+  verdict: 'on_track' | 'over_budget' | 'under_budget' | 'not_used' | 'unplanned'
+  recommendation: string
+}
+
+export interface CampaignLearnings {
+  summary: string
+  channel_insights: ChannelInsight[]
+  next_campaign_suggestions: string[]
+}
+
 export interface LoginRequest {
   email: string
   password: string
