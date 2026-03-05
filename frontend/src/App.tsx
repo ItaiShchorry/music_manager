@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage'
 import { SongDetailPage } from './pages/SongDetailPage'
 import { SongNewPage } from './pages/SongNewPage'
 import { SongsPage } from './pages/SongsPage'
+import { SubmitHubPage } from './pages/SubmitHubPage'
 
 const queryClient = new QueryClient()
 
@@ -72,6 +73,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CampaignDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/songs/:id/submithub"
+            element={
+              <ProtectedRoute>
+                <SubmitHubPage />
               </ProtectedRoute>
             }
           />

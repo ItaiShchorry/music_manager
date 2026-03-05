@@ -196,6 +196,7 @@ export interface DashboardSnapshot {
 export interface HealthScoreResponse {
   health_score: number
   label: string
+  snapshot_date: string
   metrics: {
     total_streams: number
     total_monthly_listeners: number

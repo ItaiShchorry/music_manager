@@ -86,16 +86,18 @@ function SyncModal({ onClose }: { onClose: () => void }) {
 
   const field = (
     label: string,
+    hint: string,
     key: keyof SnapshotCreate,
-    opts?: { step?: number; min?: number; placeholder?: string }
+    opts?: { step?: number; placeholder?: string }
   ) => (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-gray-700 mb-0.5">{label}</label>
+      <p className="text-xs text-gray-400 mb-1">{hint}</p>
       <input
         type="number"
         step={opts?.step ?? 1}
-        min={opts?.min ?? 0}
-        placeholder={opts?.placeholder}
+        min={0}
+        placeholder={opts?.placeholder ?? '0'}
         className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         value={form[key] ?? ''}
         onChange={(e) =>
@@ -107,34 +109,41 @@ function SyncModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Sync Spotify Data</h2>
-        <p className="text-sm text-gray-500">
-          Copy these numbers from your Spotify for Artists dashboard.
-        </p>
-
-        <div className="grid grid-cols-2 gap-3">
-          {field('Total Streams (28 days)', 'total_streams')}
-          {field('Monthly Listeners', 'total_monthly_listeners')}
-          {field('Followers', 'total_followers')}
-          {field('Saves (28 days)', 'total_saves')}
-          {field('Playlist Adds (this week)', 'total_playlist_adds')}
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Update Streaming Stats</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Copy these numbers from <span className="font-medium">Spotify for Artists</span>,{' '}
+            <span className="font-medium">DistroKid</span>, or any analytics dashboard you use.
+            A weekly sync is enough to keep your health score accurate.
+          </p>
         </div>
 
-        <p className="text-xs font-medium text-gray-500 mt-1">
-          Week-over-week trends (optional — enter as %, e.g. 25 for +25%, -10 for -10%)
-        </p>
-        <div className="grid grid-cols-3 gap-3">
-          {field('Streams %', 'streams_vs_last_week_pct', { step: 0.1, placeholder: 'e.g. 25' })}
-          {field('Listeners %', 'listeners_vs_last_week_pct', { step: 0.1, placeholder: 'e.g. 10' })}
-          {field('Followers %', 'followers_vs_last_week_pct', { step: 0.1, placeholder: 'e.g. 5' })}
+        <div className="grid grid-cols-2 gap-3">
+          {field('Total Streams', '28-day total from Spotify for Artists', 'total_streams')}
+          {field('Monthly Listeners', 'Unique listeners in the past 30 days', 'total_monthly_listeners')}
+          {field('Followers', 'Your current Spotify follower count', 'total_followers')}
+          {field('Saves', 'Library saves in the past 28 days', 'total_saves')}
+          {field('Playlist Adds', 'New playlist adds this week', 'total_playlist_adds')}
+        </div>
+
+        <div>
+          <p className="text-xs font-medium text-gray-600 mb-2">
+            Week-over-week trends{' '}
+            <span className="font-normal text-gray-400">(optional — e.g. 25 for +25%, −10 for −10%)</span>
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            {field('Streams %', 'vs. last week', 'streams_vs_last_week_pct', { step: 0.1, placeholder: 'e.g. 25' })}
+            {field('Listeners %', 'vs. last week', 'listeners_vs_last_week_pct', { step: 0.1, placeholder: 'e.g. 10' })}
+            {field('Followers %', 'vs. last week', 'followers_vs_last_week_pct', { step: 0.1, placeholder: 'e.g. 5' })}
+          </div>
         </div>
 
         {mutation.isError && (
-          <p className="text-sm text-red-600">Failed to save data. Please try again.</p>
+          <p className="text-sm text-red-600">Failed to save. Please try again.</p>
         )}
 
-        <div className="flex gap-3 justify-end pt-2">
+        <div className="flex gap-3 justify-end">
           <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700">
             Cancel
           </button>
@@ -143,7 +152,7 @@ function SyncModal({ onClose }: { onClose: () => void }) {
             disabled={mutation.isPending}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
-            {mutation.isPending ? 'Saving…' : 'Save Data'}
+            {mutation.isPending ? 'Saving…' : 'Save Stats'}
           </button>
         </div>
       </div>
@@ -228,6 +237,9 @@ export function DashboardPage() {
   })
 
   const activeCampaigns = campaigns.filter((c) => c.status === 'active')
+  const totalBudget = campaigns.reduce((sum, c) => sum + c.budget_total, 0)
+  const totalSpent = campaigns.reduce((sum, c) => sum + c.budget_spent, 0)
+  const overallBudgetPct = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -243,7 +255,7 @@ export function DashboardPage() {
             onClick={() => setShowSync(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
           >
-            Sync Spotify Data
+            Update Stats
           </button>
         </div>
 
@@ -255,15 +267,15 @@ export function DashboardPage() {
         )}
         {!healthLoading && (healthError || !health) && (
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
-            <p className="text-gray-500 mb-3">No data yet.</p>
+            <p className="text-gray-700 font-medium mb-2">No streaming stats yet</p>
             <p className="text-sm text-gray-400 mb-4">
-              Sync your Spotify data to see your health score and insights.
+              Copy your numbers from Spotify for Artists or DistroKid to calculate your health score and generate AI insights.
             </p>
             <button
               onClick={() => setShowSync(true)}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700"
             >
-              Sync Now
+              Add Stats
             </button>
           </div>
         )}
@@ -271,7 +283,17 @@ export function DashboardPage() {
           <div className={`rounded-2xl border p-6 ${SCORE_BG[health.label] ?? 'bg-white border-gray-200'}`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-700">Music Health Score</h2>
-              <span className="text-xs text-gray-400">{health.metrics.streams_vs_last_week_pct !== null ? 'Updated today' : ''}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">
+                  Updated {new Date(health.snapshot_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+                <button
+                  onClick={() => setShowSync(true)}
+                  className="text-xs text-indigo-600 hover:underline"
+                >
+                  Update
+                </button>
+              </div>
             </div>
             <div className="flex items-baseline gap-3 mb-1">
               <span className={`text-5xl font-bold ${SCORE_COLOR[health.label] ?? 'text-gray-900'}`}>
@@ -308,6 +330,43 @@ export function DashboardPage() {
                   <TrendBadge value={trend} />
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Activity Overview — always live from in-app data */}
+        {campaigns.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Campaign Activity</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Active</p>
+                <p className="text-2xl font-bold text-gray-900">{activeCampaigns.length}</p>
+                <p className="text-xs text-gray-400">{campaigns.length} total</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Budget Committed</p>
+                <p className="text-2xl font-bold text-gray-900">${totalBudget.toFixed(0)}</p>
+                <p className="text-xs text-gray-400">across all campaigns</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Total Spent</p>
+                <p className="text-2xl font-bold text-gray-900">${totalSpent.toFixed(0)}</p>
+                <p className={`text-xs ${overallBudgetPct >= 80 ? 'text-orange-500' : 'text-gray-400'}`}>
+                  {overallBudgetPct}% of budget
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Remaining</p>
+                <p className="text-2xl font-bold text-gray-900">${Math.max(totalBudget - totalSpent, 0).toFixed(0)}</p>
+                <p className="text-xs text-gray-400">to allocate</p>
+              </div>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${overallBudgetPct >= 80 ? 'bg-orange-400' : 'bg-indigo-500'}`}
+                style={{ width: `${Math.min(overallBudgetPct, 100)}%` }}
+              />
             </div>
           </div>
         )}

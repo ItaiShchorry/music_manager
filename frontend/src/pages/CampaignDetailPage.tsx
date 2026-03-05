@@ -11,43 +11,78 @@ const EXPENSE_CATEGORIES = [
   'submithub', 'pr', 'other',
 ] as const
 
+// Maps expense category names → budget recommendation channel keys
+const CATEGORY_TO_CHANNEL: Record<string, string> = {
+  playlist_pitching: 'playlist_pitching',
+  submithub: 'submithub',
+  social_ads: 'social_ads',
+  content: 'content_creation',
+  radio_promotion: 'radio_promotion',
+  pr: 'other',
+  other: 'other',
+}
+
 const STATUS_OPTIONS = ['planning', 'active', 'completed'] as const
 
 // ---------------------------------------------------------------------------
 // Budget Recommendation card
 // ---------------------------------------------------------------------------
 
-function BudgetCard({ rec, total }: { rec: BudgetRecommendation; total: number }) {
+function BudgetCard({
+  rec,
+  actualByChannel,
+}: {
+  rec: BudgetRecommendation
+  actualByChannel: Record<string, number>
+}) {
   const channels = [
-    { key: 'playlist_pitching', label: 'Playlist Pitching' },
-    { key: 'submithub', label: 'SubmitHub' },
-    { key: 'social_ads', label: 'Social Ads' },
-    { key: 'content_creation', label: 'Content Creation' },
-    { key: 'radio_promotion', label: 'Radio Promotion' },
-    { key: 'other', label: 'Other' },
-  ] as const
+    { key: 'playlist_pitching' as const, label: 'Playlist Pitching' },
+    { key: 'submithub' as const, label: 'SubmitHub' },
+    { key: 'social_ads' as const, label: 'Social Ads' },
+    { key: 'content_creation' as const, label: 'Content Creation' },
+    { key: 'radio_promotion' as const, label: 'Radio Promotion' },
+    { key: 'other' as const, label: 'Other' },
+  ]
 
   return (
-    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-3">
-      <h4 className="text-sm font-semibold text-indigo-900">AI Budget Recommendation</h4>
+    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-indigo-900">AI Budget Recommendation</h4>
+        <span className="text-xs text-indigo-500">planned → actual</span>
+      </div>
       {rec.top_tip && (
         <p className="text-xs text-indigo-700 italic">💡 {rec.top_tip}</p>
       )}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {channels.map(({ key, label }) => {
           const ch = rec[key]
           if (!ch || ch.amount === 0) return null
-          const width = Math.round((ch.amount / total) * 100)
+          const actual = actualByChannel[key] ?? 0
+          const isOver = actual > ch.amount
+          const fillPct = ch.amount > 0 ? Math.min(Math.round((actual / ch.amount) * 100), 100) : 0
           return (
             <div key={key}>
-              <div className="flex justify-between text-xs text-gray-700 mb-0.5">
-                <span className="font-medium">{label}</span>
-                <span>${ch.amount} ({ch.pct}%)</span>
+              <div className="flex justify-between items-baseline text-xs mb-1">
+                <span className="font-medium text-gray-700">
+                  {label} <span className="text-gray-400 font-normal">({ch.pct}%)</span>
+                </span>
+                <span className={isOver ? 'text-red-600 font-medium' : actual > 0 ? 'text-indigo-700 font-medium' : 'text-gray-400'}>
+                  ${actual.toFixed(0)} / ${ch.amount}
+                  {isOver && (
+                    <span className="ml-1 text-red-500 font-normal">
+                      (+${(actual - ch.amount).toFixed(0)} over)
+                    </span>
+                  )}
+                </span>
               </div>
-              <div className="h-1.5 bg-white rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${width}%` }} />
+              {/* Bar: background = recommended budget, fill = actual spent */}
+              <div className="h-2 bg-white rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${isOver ? 'bg-red-400' : actual > 0 ? 'bg-indigo-500' : 'bg-indigo-200'}`}
+                  style={{ width: `${fillPct || (actual === 0 ? 0 : 100)}%` }}
+                />
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">{ch.rationale}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{ch.rationale}</p>
             </div>
           )
         })}
@@ -215,6 +250,12 @@ export function CampaignDetailPage() {
     ? Math.min(Math.round((campaign.budget_spent / campaign.budget_total) * 100), 100)
     : 0
 
+  const actualByChannel = expenses.reduce<Record<string, number>>((acc, e) => {
+    const channel = CATEGORY_TO_CHANNEL[e.category] ?? 'other'
+    acc[channel] = (acc[channel] ?? 0) + e.amount
+    return acc
+  }, {})
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Nav />
@@ -281,7 +322,7 @@ export function CampaignDetailPage() {
             </button>
           </div>
           {campaign.budget_recommendation ? (
-            <BudgetCard rec={campaign.budget_recommendation} total={campaign.budget_total} />
+            <BudgetCard rec={campaign.budget_recommendation} actualByChannel={actualByChannel} />
           ) : (
             <p className="text-sm text-gray-400">
               No recommendation yet. Click "Get AI Recommendation" to generate a channel split.

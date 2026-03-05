@@ -8,6 +8,48 @@ import { ContentPanel } from '../components/content/ContentPanel'
 import type { PitchSubmission, Song } from '../types'
 
 // ---------------------------------------------------------------------------
+// Suggestions & story starters
+// ---------------------------------------------------------------------------
+
+const SUGGESTED_GENRES = [
+  'mainstream Hebrew pop', 'indie pop', 'acoustic', 'R&B / soul',
+  'folk', 'mizrahi', 'rock', 'hip hop', 'electronic', 'alternative',
+]
+
+const SUGGESTED_MOODS = [
+  'upbeat', 'melancholic', 'romantic', 'energetic', 'dreamy',
+  'nostalgic', 'hopeful', 'dark', 'playful', 'intense',
+  'chill', 'bittersweet', 'empowering', 'spiritual',
+]
+
+const STORY_STARTERS = [
+  {
+    theme: 'Heartbreak',
+    text: "This song was written the night after a relationship ended. I wanted to capture that specific feeling of sitting alone at 2am, replaying every moment and every word.",
+  },
+  {
+    theme: 'Nostalgia',
+    text: "I grew up in [neighborhood] and this song is a love letter to that time — the streets, the sounds, the people who shaped who I am.",
+  },
+  {
+    theme: 'New love',
+    text: "I wrote this during the early weeks of a relationship, when everything feels electric and uncertain. It's about the courage it takes to let someone in.",
+  },
+  {
+    theme: 'Resilience',
+    text: "After a really hard period in my life, I needed to write something that reminded me — and others — that you can come out the other side stronger.",
+  },
+  {
+    theme: 'Longing',
+    text: "This song is about missing someone who's physically close but emotionally distant — the kind of distance you can't measure in kilometers.",
+  },
+  {
+    theme: 'Celebration',
+    text: "Sometimes you just need a song about joy. This came from a specific night with people I love, and I wanted to bottle that feeling forever.",
+  },
+]
+
+// ---------------------------------------------------------------------------
 // Tag input component (comma-separated chips)
 // ---------------------------------------------------------------------------
 interface TagInputProps {
@@ -58,6 +100,79 @@ function TagInput({ value, onChange, placeholder }: TagInputProps) {
         placeholder={value.length === 0 ? placeholder : ''}
         className="flex-1 min-w-[120px] text-sm outline-none bg-transparent"
       />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Suggested tags chip picker
+// ---------------------------------------------------------------------------
+
+function SuggestedTags({
+  tags,
+  isActive,
+  onToggle,
+}: {
+  tags: string[]
+  isActive: (tag: string) => boolean
+  onToggle: (tag: string) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      {tags.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          onClick={() => onToggle(tag)}
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+            isActive(tag)
+              ? 'bg-indigo-100 text-indigo-800 border-indigo-300 font-medium'
+              : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-700'
+          }`}
+        >
+          {tag}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Story starters panel
+// ---------------------------------------------------------------------------
+
+function StoryStarters({ onSelect }: { onSelect: (text: string) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-xs text-indigo-600 hover:underline"
+      >
+        {open ? '▲ Hide story starters' : '▼ Need inspiration? Browse story starters'}
+      </button>
+      {open && (
+        <div className="mt-3 grid gap-2">
+          {STORY_STARTERS.map(({ theme, text }) => (
+            <div key={theme} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="text-xs font-semibold text-gray-600 block mb-1">{theme}</span>
+                  <p className="text-xs text-gray-500 leading-relaxed">{text}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { onSelect(text); setOpen(false) }}
+                  className="flex-shrink-0 text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap"
+                >
+                  Use this
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -255,6 +370,11 @@ export function SongDetailPage() {
                 placeholder="e.g. mainstream Hebrew pop"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+              <SuggestedTags
+                tags={SUGGESTED_GENRES}
+                isActive={(t) => genre === t}
+                onToggle={(t) => setGenre(genre === t ? '' : t)}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
@@ -280,6 +400,7 @@ export function SongDetailPage() {
               placeholder="What's the story behind this song?"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
             />
+            <StoryStarters onSelect={setStory} />
           </div>
 
           <div>
@@ -288,6 +409,13 @@ export function SongDetailPage() {
               value={moodTags}
               onChange={setMoodTags}
               placeholder="e.g. melancholic, upbeat — press Enter or comma"
+            />
+            <SuggestedTags
+              tags={SUGGESTED_MOODS}
+              isActive={(t) => moodTags.includes(t)}
+              onToggle={(t) =>
+                setMoodTags(moodTags.includes(t) ? moodTags.filter((m) => m !== t) : [...moodTags, t])
+              }
             />
           </div>
 
@@ -328,6 +456,24 @@ export function SongDetailPage() {
 
         {/* Content generation */}
         <ContentPanel songId={Number(id)} />
+
+        {/* SubmitHub campaigns */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">SubmitHub Campaigns</h3>
+              <p className="text-sm text-gray-400 mt-0.5">
+                Plan curator submissions and track outcomes for this song.
+              </p>
+            </div>
+            <Link
+              to={`/songs/${id}/submithub`}
+              className="text-sm bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-100 font-medium transition-colors"
+            >
+              Manage →
+            </Link>
+          </div>
+        </section>
 
         {/* Pitch history */}
         <section className="bg-white rounded-2xl shadow-sm p-6">

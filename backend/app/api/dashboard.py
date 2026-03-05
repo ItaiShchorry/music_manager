@@ -58,6 +58,7 @@ class SnapshotResponse(BaseModel):
 class HealthScoreResponse(BaseModel):
     health_score: int
     label: str
+    snapshot_date: date
     metrics: dict[str, Any]
 
 
@@ -201,6 +202,7 @@ def get_health_score(
     return HealthScoreResponse(
         health_score=score,
         label=health_label(score),
+        snapshot_date=snap.snapshot_date,
         metrics={
             "total_streams": snap.total_streams,
             "total_monthly_listeners": snap.total_monthly_listeners,
