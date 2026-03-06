@@ -3,6 +3,7 @@ import logging
 
 import anthropic
 
+from app.config import settings
 from app.models.song import Song
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ def _fallback_brief(song: Song) -> str:
 
 class PitchBriefGenerator:
     def __init__(self, client=None):
-        self.client = client or anthropic.Anthropic()
+        self.client = client or anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def generate(self, song: Song) -> str:
         """Return a 2-3 sentence SubmitHub pitch text."""

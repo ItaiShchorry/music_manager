@@ -1,7 +1,9 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.utils.logging_config import setup_logging
@@ -50,7 +52,7 @@ app.add_middleware(
 )
 
 # Routers
-from app.api import auth, campaigns, content, dashboard, opportunities, pitches, playlists, radio_stations, songs, submithub  # noqa: E402
+from app.api import auth, campaigns, challenges, content, dashboard, opportunities, pitches, playlists, progress, radio_stations, songs, submithub, youtube_briefs  # noqa: E402
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(songs.router, prefix="/api/v1")
@@ -62,6 +64,14 @@ app.include_router(campaigns.router, prefix="/api/v1")
 app.include_router(submithub.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(opportunities.router, prefix="/api/v1")
+app.include_router(youtube_briefs.router, prefix="/api/v1")
+app.include_router(challenges.router, prefix="/api/v1")
+app.include_router(progress.router, prefix="/api/v1")
+
+# Serve uploaded files
+_uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(_uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
 
 @app.get("/health")

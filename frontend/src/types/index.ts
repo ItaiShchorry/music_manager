@@ -21,6 +21,7 @@ export interface Song {
   comparable_artists: string[] | null
   genre: string | null
   language: string | null
+  search_keywords: string[] | null
 }
 
 export interface Playlist {
@@ -232,12 +233,75 @@ export interface PostOpportunity {
   hook: string
   why_now: string
   signal_type: string
+  category: 'creative' | 'youtube' | 'promotion'
   suggested_platform: string | null
   hashtag_suggestions: string[] | null
   timing_note: string | null
   status: 'active' | 'used' | 'dismissed' | 'remind_later'
   used_at: string | null
   created_at: string
+}
+
+export interface YouTubeChapter {
+  timestamp: string
+  title: string
+  what_to_cover: string
+}
+
+export interface YouTubeBrief {
+  id: number
+  user_id: number
+  song_id: number
+  concept_type: string
+  key_message: string | null
+  context: string | null
+  seo_title: string | null
+  hook_paragraph: string | null
+  chapters: YouTubeChapter[] | null
+  video_description: string | null
+  tags: string[] | null
+  status: 'draft' | 'planned' | 'filmed' | 'published'
+  filmed_at: string | null
+  published_at: string | null
+  youtube_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface YouTubeBriefStat {
+  id: number
+  brief_id: number
+  snapshot_date: string
+  views: number | null
+  likes: number | null
+  comments: number | null
+  subscribers_gained: number | null
+  created_at: string
+}
+
+export interface CreationEntry {
+  id: number
+  user_id: number
+  opportunity_id: number | null
+  content_type: 'text' | 'audio' | 'video' | 'image' | 'link'
+  text_content: string | null
+  file_url: string | null
+  external_url: string | null
+  caption_draft: string | null
+  status: 'draft' | 'published'
+  created_at: string
+}
+
+export interface UserProgress {
+  id: number
+  user_id: number
+  streak_current: number
+  streak_best: number
+  last_challenge_date: string | null
+  total_completed: number
+  level: 'newcomer' | 'emerging' | 'pro' | 'expert'
+  badges: Array<{ badge_type: string; earned_at: string }>
+  updated_at: string
 }
 
 export interface ChannelInsight {

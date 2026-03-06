@@ -1,3 +1,47 @@
+gamified experience
+1. one game per week. Create a playlist for the game. Let everyone upload there
+2. from phone or app. Allow uploading audio/video for challenge
+3. peer review.
+4. personalization
+	- learn by doing - give me jazz stuff e.g.
+5. can choose between games:
+	- Genre changer: it randomizes a known song (there will be a "I don't know this song") and a genre, and you need to make it that way
+	- X
+	- Y (use prompt to get ideas)
+6. can definitely share and/or switch with another person that did the same - peer review each other
+
+
+
+
+
+I want us to further develop the vision. The goal is first of all to have fun. That will be driven
+     mostly by the opportunity suggestions. I want them to be fun, diverse, challenging and interesting. Come up with interesting, intriguing
+     ideas and prompts for musical content creation, that is based on my existing musical content and also drives me to create new music
+     (songs, instrumental, verses etc.). The content we were focusing on up until now, the promotion side of things, is nice, and a lot of
+     pieces will still be useful, but the tool's main objective is to escort the musician's journey of content creation and make it fun to
+     create and to watch. Reorganize things top down, and then let's merge the content into PRD.md
+
+another significant change - I want the experience to feel gamified. Let's say I open the app. There
+      are 3 opportunities. I choose one. Then, I'll want a relevant screen to open up (let's say, camera or audio recorder). I'll be able to
+     replay until I'm done, hit submit, and then the content is saved and there's a celebration, similar to passing a stage in a game.
+
+
+· When a challenge involves audio or video (e.g., 'Record an instrumental challenge'), how should the creation screen work? →
+     In-browser recorder
+     · What should 'submitting' a challenge save to the app? → Full artifact model
+     · How far should the gamification mechanics go in this phase? → Full progression and also a "Share" button when finishing a
+     challenge. That will essentially be the content creation part implicitly
+
+
+ This is already starting to look great. A couple of small notes: first, notice that the challenges
+     should be diverse, and manipulate different kinds of musical aspects for bigger stimulation and enjoyment. Genres, themes, tempo,
+     goofiness. Be very playful and imaginative. Secondly, let's also think about the concept of review, either by the tool or via the sharing
+      part (or some other suggestion that you have). Don't have to nail this now, but let's write it down - it can add value to the tool
+
+
+
+
+
 1. pre-fill in some details alone for each song
 1.b. perhaps based on lyrics (also probably enter them somewhere? might be useful as vector store or something)
 2. suggest genres from a bucketlist of known ones

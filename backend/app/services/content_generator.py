@@ -8,6 +8,8 @@ import re
 
 import anthropic
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 MODEL = "claude-sonnet-4-20250514"
@@ -30,7 +32,7 @@ class HebrewContentGenerator:
     """Generates Hebrew + English social media content variants via Claude."""
 
     def __init__(self, client=None):
-        self.client = client or anthropic.Anthropic()
+        self.client = client or anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def generate_for_song(
         self,

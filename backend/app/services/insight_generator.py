@@ -6,6 +6,7 @@ from typing import Any
 
 import anthropic
 
+from app.config import settings
 from app.models.dashboard import DashboardSnapshot
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ _FALLBACK_TIP = {
 
 class InsightGenerator:
     def __init__(self, client=None):
-        self.client = client or anthropic.Anthropic()
+        self.client = client or anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def generate(
         self,

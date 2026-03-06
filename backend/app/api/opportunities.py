@@ -29,6 +29,7 @@ class OpportunityResponse(BaseModel):
     hook: str
     why_now: str
     signal_type: str
+    category: str
     suggested_platform: Optional[str]
     hashtag_suggestions: Optional[list]
     timing_note: Optional[str]
@@ -88,6 +89,7 @@ def generate_opportunities(
             hook=item.get("hook", ""),
             why_now=item.get("why_now", ""),
             signal_type=item.get("signal_type", "tip"),
+            category=item.get("category", "promotion"),
             suggested_platform=item.get("suggested_platform"),
             hashtag_suggestions=item.get("hashtag_suggestions"),
             timing_note=item.get("timing_note"),

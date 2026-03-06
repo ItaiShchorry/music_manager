@@ -9,6 +9,8 @@ from collections import defaultdict
 
 import anthropic
 
+from app.config import settings
+
 from app.models.campaign import Campaign, Expense
 
 logger = logging.getLogger(__name__)
@@ -171,7 +173,7 @@ def _fallback_learnings(campaign: Campaign, actual_by_channel: dict[str, float])
 
 class LearningsGenerator:
     def __init__(self, client=None):
-        self.client = client or anthropic.Anthropic()
+        self.client = client or anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def generate(self, campaign: Campaign, expenses: list[Expense]) -> dict:
         # Aggregate actual spend per channel

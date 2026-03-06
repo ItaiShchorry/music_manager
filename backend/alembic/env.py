@@ -22,6 +22,9 @@ import app.models.campaign  # noqa: F401
 import app.models.submithub  # noqa: F401
 import app.models.dashboard  # noqa: F401
 import app.models.post_opportunity  # noqa: F401
+import app.models.youtube_brief  # noqa: F401
+import app.models.creation_entry  # noqa: F401
+import app.models.user_progress  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

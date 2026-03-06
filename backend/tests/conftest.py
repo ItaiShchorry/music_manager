@@ -19,6 +19,9 @@ from app.models.campaign import Campaign, Expense  # noqa: F401 — registers ta
 from app.models.submithub import SubmitHubCampaign, SubmitHubSubmission  # noqa: F401 — registers tables
 from app.models.dashboard import DashboardSnapshot, Insight  # noqa: F401 — registers tables
 from app.models.post_opportunity import PostOpportunity  # noqa: F401 — registers table
+from app.models.youtube_brief import YouTubeBrief, YouTubeBriefStat  # noqa: F401 — registers tables
+from app.models.creation_entry import CreationEntry  # noqa: F401 — registers table
+from app.models.user_progress import UserProgress  # noqa: F401 — registers table
 from app.models.radio_station import RadioStation
 from app.models.song import Song
 from app.models.user import User

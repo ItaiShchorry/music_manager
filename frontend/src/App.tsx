@@ -6,6 +6,7 @@ import { CampaignsPage } from './pages/CampaignsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DiscoverPage } from './pages/DiscoverPage'
 import { LoginPage } from './pages/LoginPage'
+import { ManagerPage } from './pages/ManagerPage'
 import { SongDetailPage } from './pages/SongDetailPage'
 import { SongNewPage } from './pages/SongNewPage'
 import { SongsPage } from './pages/SongsPage'
@@ -18,7 +19,15 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/songs" replace />} />
+          <Route path="/" element={<Navigate to="/manager" replace />} />
+          <Route
+            path="/manager"
+            element={
+              <ProtectedRoute>
+                <ManagerPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/dashboard"

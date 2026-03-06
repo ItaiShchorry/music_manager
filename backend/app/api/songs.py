@@ -50,6 +50,7 @@ class SongUpdate(BaseModel):
     comparable_artists: list[str] | None = None
     genre: str | None = None
     language: str | None = None
+    search_keywords: list[str] | None = None
 
 
 class SongResponse(BaseModel):
@@ -69,6 +70,7 @@ class SongResponse(BaseModel):
     comparable_artists: list | None
     genre: str | None
     language: str | None
+    search_keywords: list | None
 
     model_config = {"from_attributes": True}
 
@@ -158,6 +160,9 @@ def update_song(
         raise HTTPException(status_code=404, detail="Song not found")
 
     updates = body.model_dump(exclude_unset=True)
+    # Normalize empty lists to null
+    if "search_keywords" in updates and updates["search_keywords"] == []:
+        updates["search_keywords"] = None
     for field, value in updates.items():
         setattr(song, field, value)
 

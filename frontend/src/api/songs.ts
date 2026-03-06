@@ -18,7 +18,7 @@ export async function createSong(payload: { spotify_url: string }): Promise<Song
 
 export async function updateSong(
   id: number,
-  patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists' | 'genre' | 'language'>>
+  patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists' | 'genre' | 'language' | 'search_keywords'>>
 ): Promise<Song> {
   const { data } = await client.patch<Song>(`/songs/${id}`, patch)
   return data

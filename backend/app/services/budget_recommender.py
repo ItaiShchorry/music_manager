@@ -8,6 +8,8 @@ import re
 
 import anthropic
 
+from app.config import settings
+
 from app.models.campaign import Campaign
 from app.models.song import Song
 
@@ -28,7 +30,7 @@ FALLBACK_RECOMMENDATION = {
 
 class BudgetRecommender:
     def __init__(self, client=None):
-        self.client = client or anthropic.Anthropic()
+        self.client = client or anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def generate(self, campaign: Campaign, songs: list[Song]) -> dict:
         prompt = self._build_prompt(campaign, songs)

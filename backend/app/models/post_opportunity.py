@@ -22,6 +22,10 @@ class PostOpportunity(Base):
     why_now: Mapped[str] = mapped_column(Text, nullable=False)
     signal_type: Mapped[str] = mapped_column(String(50), nullable=False)
     # "milestone" | "playlist_add" | "inactivity" | "calendar" | "recent_release" | "trend"
+    # creative: "lyric_prompt"|"catalog_gap"|"song_experiment"|"style_exploration"|"instrumental_challenge"|"cover_idea"
+    # youtube: "story_ready"|"no_video"|"brief_filmed_unpublished"|"youtube_milestone"
+    category: Mapped[str] = mapped_column(String(20), nullable=False, default="promotion")
+    # "creative" | "youtube" | "promotion"
 
     suggested_platform: Mapped[str | None] = mapped_column(String(50))
     # "instagram" | "facebook" | "tiktok" | "all"

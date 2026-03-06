@@ -5,6 +5,7 @@ import { getPitchesForSong, updatePitch } from '../api/pitches'
 import { getSong, listSongs, updateSong } from '../api/songs'
 import { Nav } from '../components/Nav'
 import { ContentPanel } from '../components/content/ContentPanel'
+import { YouTubeBriefPanel } from '../components/youtube/YouTubeBriefPanel'
 import type { PitchSubmission, Song } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -254,6 +255,7 @@ export function SongDetailPage() {
   const [comparableArtists, setComparableArtists] = useState<string[]>([])
   const [genre, setGenre] = useState<string>('')
   const [language, setLanguage] = useState<string>('')
+  const [searchKeywords, setSearchKeywords] = useState<string[]>([])
 
   useEffect(() => {
     if (song) {
@@ -263,11 +265,12 @@ export function SongDetailPage() {
       setComparableArtists(song.comparable_artists ?? [])
       setGenre(song.genre ?? '')
       setLanguage(song.language ?? '')
+      setSearchKeywords(song.search_keywords ?? [])
     }
   }, [song?.id])
 
   const mutation = useMutation({
-    mutationFn: (patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists' | 'genre' | 'language'>>) =>
+    mutationFn: (patch: Partial<Pick<Song, 'story' | 'mood_tags' | 'themes' | 'comparable_artists' | 'genre' | 'language' | 'search_keywords'>>) =>
       updateSong(Number(id), patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['song', Number(id)] })
@@ -299,6 +302,7 @@ export function SongDetailPage() {
       comparable_artists: comparableArtists.length ? comparableArtists : null,
       genre: genre || null,
       language: language || null,
+      search_keywords: searchKeywords.length ? searchKeywords : null,
     })
   }
 
@@ -466,6 +470,16 @@ export function SongDetailPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">SEO Search Keywords</label>
+            <TagInput
+              value={searchKeywords}
+              onChange={setSearchKeywords}
+              placeholder='e.g. "Hebrew songs about loss", "Israeli indie pop"'
+            />
+            <p className="text-xs text-gray-400 mt-1">Used in YouTube brief descriptions for better search visibility</p>
+          </div>
+
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={handleSave}
@@ -485,6 +499,11 @@ export function SongDetailPage() {
 
         {/* Content generation */}
         <ContentPanel songId={Number(id)} />
+
+        {/* YouTube Briefs */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <YouTubeBriefPanel songId={Number(id)} />
+        </section>
 
         {/* SubmitHub campaigns */}
         <section className="bg-white rounded-2xl shadow-sm p-6">
